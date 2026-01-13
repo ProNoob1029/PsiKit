@@ -158,7 +158,7 @@ public class Logger {
 
       // Record metadata
       LogTable metadataTable =
-          entry.getSubtable(replaySource == null ? "RealMetadata" : "ReplayMetadata");
+          entry.getSubtable(replaySource == null ? "Metadata/Real" : "Metadata/Replay");
       for (Map.Entry<String, String> item : metadata.entrySet()) {
         metadataTable.put(item.getKey(), item.getValue());
       }
