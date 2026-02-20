@@ -9,6 +9,7 @@ import org.firstinspires.ftc.robotcore.internal.opmode.TelemetryInternal;
 import org.firstinspires.ftc.robotcore.internal.system.Assert;
 import org.psilynx.psikit.core.Logger;
 import org.psilynx.psikit.ftc.FtcLoggingSession;
+import org.psilynx.psikit.ftc.autolog.PsiKitNoAutoLog;
 
 import kotlin.Unit;
 
@@ -19,6 +20,7 @@ import kotlin.Unit;
  * override the methods defined in OpMode.
  */
 @SuppressWarnings("unused")
+@PsiKitNoAutoLog
 public abstract class LoggedOpMode extends OpMode {
     /** Port for the optional RLOG server. Set to 0 to disable. */
     protected int rlogPort = 5800;
