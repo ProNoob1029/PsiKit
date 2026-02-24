@@ -63,7 +63,7 @@ public abstract class LoggedOpMode extends OpMode {
     private void ensurePsiKitStarted() {
         if (sessionStarted) return;
 
-        if (!rlogFilename.isBlank()) {
+        if (!rlogFilename.isEmpty()) {
             psiKitSession.start(
                     this,
                     rlogPort,
