@@ -5,6 +5,7 @@ import com.qualcomm.hardware.lynx.LynxModule.BulkCachingMode.MANUAL
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
 import com.qualcomm.robotcore.eventloop.opmode.OpMode
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
+import com.qualcomm.robotcore.hardware.HardwareDevice
 import org.psilynx.psikit.core.LoggableInputs
 import org.psilynx.psikit.core.LogReplaySource
 import org.psilynx.psikit.core.Logger
@@ -15,6 +16,7 @@ import org.psilynx.psikit.ftc.wrappers.AnalogInputWrapper
 import org.psilynx.psikit.ftc.wrappers.ColorDistanceSensorWrapper
 import org.psilynx.psikit.ftc.wrappers.CrServoWrapper
 import org.psilynx.psikit.ftc.wrappers.DigitalChannelWrapper
+import org.psilynx.psikit.ftc.wrappers.HardwareInput
 import org.psilynx.psikit.ftc.wrappers.ImuWrapper
 import org.psilynx.psikit.ftc.wrappers.Limelight3AWrapper
 import org.psilynx.psikit.ftc.wrappers.MotorWrapper
@@ -339,6 +341,9 @@ class FtcLoggingSession {
         )
 
         if (enablePinpointOdometryLogging) {
+            HardwareMapWrapper.devicesToProcess.toList()
+                .filter { it.second is PinpointWrapper }.map { it.second as HardwareInput<*> }
+                .forEach { it.onceBeforeLoop("") }
             // Pinpoint odometry (AdvantageScope Pose2d/Pose3d structs under /Odometry).
             val pinpointStartNs = System.nanoTime()
             pinpointOdometryLogger.logAll(opMode.hardwareMap)
@@ -395,6 +400,8 @@ class FtcLoggingSession {
                 maxDeviceNs = dtNs
                 maxDeviceKey = key
             }
+
+            (value as? HardwareInput<*>)?.onceBeforeLoop(key)
         }
 
         val loopEndNs = System.nanoTime()

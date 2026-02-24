@@ -167,13 +167,21 @@ class PinpointWrapper(
 
     // ---- Replay-safe overrides (delegate to real device when present) ----
 
+    private var updatedThisLoop = false
+    override fun onceBeforeLoop(key: String) {
+        updatedThisLoop = false
+    }
     override fun update() {
         if (Logger.isReplay() || device == null) return
+        if (updatedThisLoop && FtcLogTuning.pinpointLoggerCallsUpdate) return
+        updatedThisLoop = true
         device.update()
     }
 
     override fun update(data: ReadData?) {
         if (Logger.isReplay() || device == null) return
+        if (updatedThisLoop && FtcLogTuning.pinpointLoggerCallsUpdate) return
+        updatedThisLoop = true
         if (data == null) device.update() else device.update(data)
     }
 
