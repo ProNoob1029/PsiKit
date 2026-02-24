@@ -285,7 +285,7 @@ public class Logger {
       recordOutput(
           "LoggedRobot/LogPeriodicMS", (periodicBeforeLength) * 1000.0);
       recordOutput(
-              "LoggedRobot/LogPeriodicMS", idleLenght * 1000.0
+              "LoggedRobot/LogIdleMS", idleLenght * 1000.0
       );
       recordOutput(
           "LoggedRobot/FullCycleMS",
