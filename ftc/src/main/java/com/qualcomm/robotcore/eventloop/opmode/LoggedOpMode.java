@@ -35,24 +35,28 @@ public abstract class LoggedOpMode extends OpMode {
     protected FtcLoggingSession psiKitSession = new FtcLoggingSession();
 
     private boolean sessionStarted = false;
-
-    private Double beforeUserStart = 0.0;
-    private Double beforeUserEnd = 0.0;
+    private Double setupStart = 0.0;
+    private Double setupEnd = 0.0;
+    private Double idleStart = 0.0;
+    private Double idleEnd = 0.0;
+    private Double userStart = 0.0;
 
     private void beforeUser() {
-        beforeUserStart = Logger.getRealTimestamp();
+        setupStart = Logger.getRealTimestamp();
 
         Logger.periodicBeforeUser();
         psiKitSession.logOncePerLoop(this);
 
-        beforeUserEnd = Logger.getRealTimestamp();
+        setupEnd = Logger.getRealTimestamp();
+        userStart = setupEnd;
     }
 
     private void afterUser() {
         double afterUserStart = Logger.getRealTimestamp();
         Logger.periodicAfterUser(
-                afterUserStart - beforeUserEnd,
-                beforeUserEnd - beforeUserStart
+                afterUserStart - userStart,
+                setupEnd - setupStart,
+                idleEnd - idleStart
         );
     }
 
@@ -212,7 +216,11 @@ public abstract class LoggedOpMode extends OpMode {
   public final boolean opModeIsActive() {
       afterUser();
       beforeUser();
-      return opModeIsActiveDefault();
+      idleStart = Logger.getRealTimestamp();
+      boolean isActive = opModeIsActiveDefault();
+      idleEnd = Logger.getRealTimestamp();
+      userStart = idleEnd;
+      return isActive;
   }
 
     private boolean opModeIsActiveDefault() {
@@ -234,6 +242,8 @@ public abstract class LoggedOpMode extends OpMode {
   public final boolean opModeInInit() {
       afterUser();
       beforeUser();
+      idleStart = Logger.getRealTimestamp();
+      idleEnd = idleStart;
       return opModeInInitDefault();
   }
 

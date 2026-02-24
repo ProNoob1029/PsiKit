@@ -265,6 +265,15 @@ public class Logger {
    * operations to occur between cycles rather than interferring with the main thread.
    */
   public static void periodicAfterUser(double userCodeLength, double periodicBeforeLength) {
+    periodicAfterUser(userCodeLength, periodicBeforeLength, 0.0);
+  }
+
+  /**
+   * Periodic method to be called after the constructor of Robot and each loop cycle. Updates
+   * default log values and sends data to data receivers. Running this after user code allows IO
+   * operations to occur between cycles rather than interferring with the main thread.
+   */
+  public static void periodicAfterUser(double userCodeLength, double periodicBeforeLength, double idleLenght) {
     if (running) {
       // Update automatic outputs from user code
       double autoLogStart = getRealTimestamp();
@@ -276,8 +285,11 @@ public class Logger {
       recordOutput(
           "LoggedRobot/LogPeriodicMS", (periodicBeforeLength) * 1000.0);
       recordOutput(
+              "LoggedRobot/LogPeriodicMS", idleLenght * 1000.0
+      );
+      recordOutput(
           "LoggedRobot/FullCycleMS",
-          (periodicBeforeLength + userCodeLength) * 1000.0);
+          (periodicBeforeLength + userCodeLength + idleLenght) * 1000.0);
       recordOutput("Logger/QueuedCycles", receiverQueue.size());
 
       double consoleCaptureStart = getRealTimestamp();
