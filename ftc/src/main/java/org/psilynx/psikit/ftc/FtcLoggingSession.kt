@@ -69,7 +69,8 @@ class FtcLoggingSession {
     fun start(
         opMode: OpMode,
         rlogPort: Int,
-        filename: String = defaultLogFilename(opMode),
+        filename: String = "",
+        writeFile: Boolean = true,
         folder: String = "/sdcard/FIRST/PsiKit/",
         replaySource: LogReplaySource? = null,
         metadataOpMode: OpMode = opMode,
@@ -167,7 +168,8 @@ class FtcLoggingSession {
             Logger.addDataReceiver(RLOGServer(rlogPort))
         }
 
-        // Blank filename disables file output.
+        // Set writeFile=false to disable file output.
+        // If writing is enabled, blank filename means "use default".
         // In replay, keep file output disabled unless explicitly enabled.
         val enableWriter = if (isReplay) {
             // See note above: accept both -D... and env vars so this can be controlled reliably from
@@ -177,7 +179,7 @@ class FtcLoggingSession {
         } else {
             true
         }
-        if (enableWriter && filename.isNotBlank()) {
+        if (enableWriter && writeFile) {
             val effectiveFolderRaw = if (isReplay) {
                 System.getProperty(REPLAY_OUTPUT_DIR_PROPERTY)?.takeIf { it.isNotBlank() }
                     ?: System.getenv(REPLAY_OUTPUT_DIR_ENV)?.takeIf { it.isNotBlank() }
@@ -186,12 +188,14 @@ class FtcLoggingSession {
                 folder
             }
 
+            val effectiveFilename = filename.ifBlank { defaultLogFilename(metadataOpMode) }
+
             // RLOGWriter expects forward slashes and a trailing slash.
             val effectiveFolder = effectiveFolderRaw
                 .replace('\\', '/')
                 .let { if (it.endsWith('/')) it else "$it/" }
 
-            Logger.addDataReceiver(RLOGWriter(effectiveFolder, filename))
+            Logger.addDataReceiver(RLOGWriter(effectiveFolder, effectiveFilename))
         }
 
         if (FtcLogTuning.prefetchBulkDataEachLoop)
@@ -232,6 +236,7 @@ class FtcLoggingSession {
             opMode = opMode,
             rlogPort = rlogPort,
             filename = defaultLogFilename(opMode),
+            writeFile = true,
             folder = folder,
             replaySource = replaySource,
             metadataOpMode = opMode,
@@ -343,7 +348,7 @@ class FtcLoggingSession {
             (dsEndNs - dsStartNs) / 1_000.0
         )
 
-        if (enablePinpointOdometryLogging) {
+        if (enablePinpointOdometryLogging && !FtcLogTuning.bulkOnlyLogging) {
             HardwareMapWrapper.devicesToProcess.toList()
                 .filter { it.second is PinpointWrapper }.map { it.second as HardwareInput<*> }
                 .forEach { it.onceBeforeLoop("") }
@@ -403,8 +408,6 @@ class FtcLoggingSession {
                 maxDeviceNs = dtNs
                 maxDeviceKey = key
             }
-
-            (value as? HardwareInput<*>)?.onceBeforeLoop(key)
         }
 
         val loopEndNs = System.nanoTime()
