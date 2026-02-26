@@ -433,6 +433,10 @@ public class Logger {
     }
   }
 
+  public static void recordOutput(String key, MeasuredUnit unit) {
+    recordOutput(key + " " + unit.getUnit(), unit.getValue());
+  }
+
   /**
    * Records a single output field for easy access when viewing the log. On the simulator, use this
    * method to record extra data based on the original inputs.
