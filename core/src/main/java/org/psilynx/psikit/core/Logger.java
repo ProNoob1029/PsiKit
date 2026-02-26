@@ -149,7 +149,7 @@ public class Logger {
   public static void start() {
     if (!running) {
       running = true;
-      startTime = getTimestamp();
+      startTime = System.nanoTime() / 1000000000.0;
 
       // Start console capture
       if (enableConsole) {

@@ -194,6 +194,9 @@ class FtcLoggingSession {
             Logger.addDataReceiver(RLOGWriter(effectiveFolder, filename))
         }
 
+        if (FtcLogTuning.prefetchBulkDataEachLoop)
+            setManualBulkCache()
+
         // Allow user code (or a base class) to add additional receivers / metadata
         // after Logger.reset() but before the first cycle begins.
         configure?.invoke()
@@ -440,6 +443,17 @@ class FtcLoggingSession {
         for (hub in hubs) {
             try {
                 hub.clearBulkCache()
+            } catch (_: Throwable) {
+                // ignore
+            }
+        }
+    }
+
+    private fun setManualBulkCache() {
+        val hubs = allHubs ?: return
+        for (hub in hubs) {
+            try {
+                hub.bulkCachingMode = MANUAL
             } catch (_: Throwable) {
                 // ignore
             }
