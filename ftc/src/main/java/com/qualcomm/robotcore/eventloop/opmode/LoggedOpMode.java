@@ -31,6 +31,7 @@ public abstract class LoggedOpMode extends OpMode {
 
     /** Optional filename override; blank means "use default". */
     protected String rlogFilename = "";
+    protected boolean writeRlogFile = true;
 
     protected FtcLoggingSession psiKitSession = new FtcLoggingSession();
 
@@ -68,6 +69,7 @@ public abstract class LoggedOpMode extends OpMode {
                     this,
                     rlogPort,
                     rlogFilename,
+                    writeRlogFile,
                     rlogFolder,
                     null,
                     this,
