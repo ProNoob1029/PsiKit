@@ -1,14 +1,15 @@
 package org.psilynx.psikit.ftc.wrappers
 
+import com.qualcomm.robotcore.hardware.HardwareDevice
+
 interface LoggableHardware {
-    fun onceBeforeLoop(key: String) {
+    fun onceBeforeLoop() {
         cacheResets.forEach { it() }
         readTime = 0.0
         wrieTime = 0.0
-        this.key = key
     }
     var readTime: Double
     var wrieTime: Double
     val cacheResets: MutableList<() -> Unit>
-    var key: String
+    val hardwareName: String
 }

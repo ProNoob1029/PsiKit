@@ -172,7 +172,7 @@ class PinpointWrapper(
     // ---- Replay-safe overrides (delegate to real device when present) ----
 
     private var updatedThisLoop = false
-    override fun onceBeforeLoop(key: String) {
+    override fun onceBeforeLoop() {
         updatedThisLoop = false
     }
     override fun update() {

@@ -46,7 +46,7 @@ public abstract class LoggedOpMode extends OpMode {
         setupStart = Logger.getRealTimestamp();
 
         Logger.periodicBeforeUser();
-        psiKitSession.logOncePerLoop(this);
+        psiKitSession.logOnceBeforeLoop(this);
 
         setupEnd = Logger.getRealTimestamp();
         userStart = setupEnd;

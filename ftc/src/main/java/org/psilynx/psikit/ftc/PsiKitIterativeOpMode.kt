@@ -8,7 +8,7 @@ import org.psilynx.psikit.ftc.autolog.PsiKitNoAutoLog
  * Minimal-change base class for iterative FTC [OpMode]s that want PsiKit logging.
  *
  * - Starts PsiKit in [init] (so the wrapped hardwareMap is available immediately).
- * - Runs Logger periodic hooks + [FtcLoggingSession.logOncePerLoop] in init_loop/loop.
+ * - Runs Logger periodic hooks + [FtcLoggingSession.logOnceBeforeLoop] in init_loop/loop.
  * - In replay, PsiKit may toggle internal "isStarted" without the FTC runtime invoking [start].
  *   This base class detects a false->true transition and invokes [onPsiKitStart] once.
  */
@@ -40,7 +40,7 @@ open class PsiKitIterativeOpMode : OpMode() {
         val beforeUserStart = Logger.getRealTimestamp()
 
         Logger.periodicBeforeUser()
-        psiKitSession.logOncePerLoop(this)
+        psiKitSession.logOnceBeforeLoop(this)
         maybeRunStartHookFromReplay()
 
         val beforeUserEnd = Logger.getRealTimestamp()
@@ -62,7 +62,7 @@ open class PsiKitIterativeOpMode : OpMode() {
         val beforeUserStart = Logger.getRealTimestamp()
 
         Logger.periodicBeforeUser()
-        psiKitSession.logOncePerLoop(this)
+        psiKitSession.logOnceBeforeLoop(this)
         maybeRunStartHookFromReplay()
 
         val beforeUserEnd = Logger.getRealTimestamp()

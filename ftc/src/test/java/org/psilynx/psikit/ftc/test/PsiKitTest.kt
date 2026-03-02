@@ -52,7 +52,7 @@ class PsiKitTest {
         try {
             while (Logger.getTimestamp() < 295) {
                 Logger.periodicBeforeUser()
-                session.logOncePerLoop(opMode)
+                session.logOnceBeforeLoop(opMode)
 
                 println(device.position)
 

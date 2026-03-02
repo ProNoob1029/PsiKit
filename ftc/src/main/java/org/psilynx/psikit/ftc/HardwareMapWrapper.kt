@@ -53,6 +53,7 @@ import org.psilynx.psikit.ftc.wrappers.ServoWrapper
 import org.psilynx.psikit.ftc.wrappers.SparkFunOTOSWrapper
 import org.psilynx.psikit.ftc.wrappers.VoltageSensorWrapper
 import org.psilynx.psikit.ftc.wrappers.ColorDistanceSensorWrapper
+import org.psilynx.psikit.ftc.wrappers.LoggableHardware
 import java.lang.reflect.Proxy
 import java.util.SortedSet
 import java.util.Spliterator
@@ -274,7 +275,7 @@ class HardwareMapWrapper(
                 if (device == null || device is CRServoImplEx) wrapperTemplate.new(device as? CRServoImplEx)
                 else null
             }
-            else -> wrapperTemplate?.new(device)
+            else -> wrapperTemplate?.new(device, "HardwareMap/$name")
         }
 
 
@@ -287,7 +288,7 @@ class HardwareMapWrapper(
             if (wrapper is PinpointWrapper) {
                 wrapper.psikitName = name
             }
-            devicesToProcess.put(name, wrapper)
+            devicesToProcess[name] = wrapper
 
             // Important: if the user asked for a concrete class (not an interface), we cannot
             // safely return an arbitrary wrapper unless it is actually an instance of that class.
@@ -511,7 +512,7 @@ class HardwareMapWrapper(
     }
 
     companion object {
-        internal val devicesToProcess = mutableMapOf<String, LoggableInputs>()
+        internal val devicesToProcess = mutableMapOf<String, LoggableHardware>()
         private val warnedUnknownDeviceTypes = mutableSetOf<String>()
     }
 }

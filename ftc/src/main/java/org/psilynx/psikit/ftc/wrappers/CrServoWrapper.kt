@@ -3,14 +3,18 @@ package org.psilynx.psikit.ftc.wrappers
 import com.qualcomm.robotcore.hardware.CRServoImplEx
 import com.qualcomm.robotcore.hardware.DcMotorSimple
 import com.qualcomm.robotcore.hardware.HardwareDevice
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor
+import com.qualcomm.robotcore.hardware.NormalizedRGBA
 import com.qualcomm.robotcore.hardware.PwmControl
 import com.qualcomm.robotcore.hardware.ServoController
 import com.qualcomm.robotcore.hardware.ServoControllerEx
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.ServoConfigurationType
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit
 import org.psilynx.psikit.ftc.FtcLogTuning
 import org.psilynx.psikit.core.LogTable
+import org.psilynx.psikit.ftc.loggableField
 
-class CrServoWrapper(private val device: CRServoImplEx?):
+class CrServoWrapper(private val device: CRServoImplEx?, name: String = ""):
     CRServoImplEx(
         object : ServoControllerEx {
             override fun setServoPwmRange(servo: Int, range: PwmControl.PwmRange) {}
@@ -36,96 +40,70 @@ class CrServoWrapper(private val device: CRServoImplEx?):
     ),
     HardwareInput<CRServoImplEx>
 {
+    override var readTime = 0.0
+    override var wrieTime = 0.0
+    override val cacheResets = mutableListOf<() -> Unit>()
+    override val hardwareName = name
 
-    private var _direction   = DcMotorSimple.Direction.FORWARD
-    private var _power       = 0.0
-    private var _pwmLower    = 500.0
-    private var _pwmUpper    = 2500.0
-    private var _pwmEnabled  = true
-    private var _deviceName  = "MockCrServo"
-    private var _version     = 1
-    private var _connectionInfo = ""
-    private var _manufacturer   = HardwareDevice.Manufacturer.Other
+    private var _direction by loggableField(
+        device?.let { it::getDirection },
+        DcMotorSimple.Direction.FORWARD,
+        device?.let { it::setDirection }
+    )
+    private var _power by loggableField(
+        device?.let { it::getPower },
+        device?.let { it::setPower }
+    )
+    private var _pwmRange by loggableField(
+        device?.let { it::getPwmRange },
+        PwmControl.PwmRange(500.0, 2500.0),
+        { table, value: PwmControl.PwmRange, name ->
+            val subTable = table.getSubtable(name)
+            subTable.put("lower", value.usPulseLower)
+            subTable.put("upper", value.usPulseUpper)
+            subTable.put("usFrame", value.usFrame)
 
-    private var lastSampleNs: Long = Long.MIN_VALUE
-
-    private fun secondsSince(ns: Long): Double {
-        if (ns == Long.MIN_VALUE) return Double.POSITIVE_INFINITY
-        return (System.nanoTime() - ns) / 1_000_000_000.0
-    }
-
-    private fun shouldSampleNow(): Boolean {
-        val period = FtcLogTuning.nonBulkReadPeriodSec
-        if (period <= 0.0) return true
-        return secondsSince(lastSampleNs) >= period
-    }
-
-    override fun new(wrapped: CRServoImplEx?) = CrServoWrapper(wrapped)
-
-    override fun toLog(table: LogTable) {
-        device!!
-
-        if (FtcLogTuning.bulkOnlyLogging) {
-            return
+        },
+        { table, name ->
+            val subTable = table.getSubtable(name)
+            PwmControl.PwmRange(
+                subTable.get("lower", PwmControl.PwmRange.usPulseLowerDefault),
+                subTable.get("upper", PwmControl.PwmRange.usPulseUpperDefault),
+                subTable.get("usFrame", PwmControl.PwmRange.usFrameDefault)
+            )
         }
+    )
+    private var _pwmEnabled by loggableField(
+    device?.let { it::isPwmEnabled },
+    device?.let { { value: Boolean -> if (value) it.setPwmEnable() else it.setPwmDisable() } }
+    )
+    private val _connectionInfo by loggableField(device?.let { it::getConnectionInfo })
+    private val _manufacturer by loggableField(device?.let { it::getManufacturer }, HardwareDevice.Manufacturer.Other)
+    private val _deviceName by loggableField(device?.let { it::getDeviceName })
+    private val _version by loggableField(device?.let { it::getVersion })
 
-        if (!shouldSampleNow()) {
-            // Skip reads/writes this loop; LogTable retains the last values.
-            return
-        }
-        lastSampleNs = System.nanoTime()
-
-        _direction      = device.direction
-        _power          = device.power
-        _pwmLower       = device.pwmRange.usPulseLower.toDouble()
-        _pwmUpper       = device.pwmRange.usPulseUpper.toDouble()
-        _pwmEnabled     = device.isPwmEnabled
-        _deviceName     = device.deviceName
-        _version        = device.version
-        _connectionInfo = device.connectionInfo
-        _manufacturer   = device.manufacturer
-
-        table.put("direction", direction)
-        table.put("power", power)
-        table.put("pwmLower", pwmRange.usPulseLower)
-        table.put("pwmUpper", pwmRange.usPulseUpper)
-        table.put("pwmEnabled", isPwmEnabled)
-        table.put("deviceName", deviceName)
-        table.put("version", version)
-        table.put("connectionInfo", connectionInfo)
-        table.put("manufacturer", manufacturer)
-
-    }
-
-    override fun fromLog(table: LogTable) {
-        _direction      = table.get("direction", DcMotorSimple.Direction.FORWARD)
-        _power          = table.get("power", 0.0)
-        _pwmLower       = table.get("pwmLower", 500.0)
-        _pwmUpper       = table.get("pwmUpper", 2500.0)
-        _pwmEnabled     = table.get("pwmEnabled", true)
-        _deviceName     = table.get("deviceName", "MockCrServo")
-        _version        = table.get("version", 1)
-        _connectionInfo = table.get("connectionInfo", "")
-        _manufacturer   = table.get("manufacturer", HardwareDevice.Manufacturer.Other)
-    }
+    override fun new(wrapped: CRServoImplEx?, name: String) = CrServoWrapper(wrapped, name)
 
     override fun getDirection() = _direction
 
-    override fun setDirection(direction: DcMotorSimple.Direction) =
-        device?.setDirection(direction) ?: Unit
+    override fun setDirection(direction: DcMotorSimple.Direction) {
+        _direction = direction
+    }
 
-    override fun setPower(power: Double) =
-        device?.setPower(power) ?: Unit
+    override fun setPower(power: Double) {
+        _power = power
+    }
 
-    override fun setPwmRange(range: PwmControl.PwmRange) =
-        device?.setPwmRange (range) ?: Unit
+    override fun setPwmRange(range: PwmControl.PwmRange) {
+        _pwmRange = range
+    }
 
-    override fun setPwmEnable() { device?.setPwmEnable() }
+    override fun setPwmEnable() { _pwmEnabled = true }
 
-    override fun setPwmDisable() { device?.setPwmDisable() }
+    override fun setPwmDisable() { _pwmEnabled = false }
 
     override fun getPower() = _power
-    override fun getPwmRange() = PwmControl.PwmRange(_pwmLower, _pwmUpper)
+    override fun getPwmRange() = _pwmRange
     override fun isPwmEnabled() = _pwmEnabled
     override fun getDeviceName() = _deviceName
     override fun getVersion() = _version

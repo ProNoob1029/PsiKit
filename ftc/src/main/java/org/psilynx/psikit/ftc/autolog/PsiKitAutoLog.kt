@@ -125,7 +125,7 @@ object PsiKitAutoLogger : OpModeManagerNotifier.Notifications {
     fun linearPeriodicBeforeUser(opMode: LinearOpMode) {
         Logger.periodicBeforeUser()
         val session = synchronized(linearLock) { linearSessions[opMode] }
-        session?.logOncePerLoop(opMode)
+        session?.logOnceBeforeLoop(opMode)
     }
 
     /**
@@ -263,7 +263,7 @@ object PsiKitAutoLogger : OpModeManagerNotifier.Notifications {
             RobotLog.ww(
                 TAG,
                 "Auto-logging LinearOpMode '${opMode.javaClass.name}' is limited (no per-loop wrapper). " +
-                    "For full PsiKit loop timing + bulk-cache management, prefer PsiKitIterativeOpMode (iterative) or call FtcLoggingSession.logOncePerLoop() from your LinearOpMode loop."
+                    "For full PsiKit loop timing + bulk-cache management, prefer PsiKitIterativeOpMode (iterative) or call FtcLoggingSession.logOnceBeforeLoop() from your LinearOpMode loop."
             )
         } catch (t: Throwable) {
             try {
@@ -347,7 +347,7 @@ class PsiKitWrappedIterativeOpMode(
         val beforeUserStart = Logger.getRealTimestamp()
 
         Logger.periodicBeforeUser()
-        psiKitSession.logOncePerLoop(this)
+        psiKitSession.logOnceBeforeLoop(this)
         maybeRunStartHookFromReplay()
 
         val beforeUserEnd = Logger.getRealTimestamp()
@@ -370,7 +370,7 @@ class PsiKitWrappedIterativeOpMode(
         val beforeUserStart = Logger.getRealTimestamp()
 
         Logger.periodicBeforeUser()
-        psiKitSession.logOncePerLoop(this)
+        psiKitSession.logOnceBeforeLoop(this)
         maybeRunStartHookFromReplay()
 
         val beforeUserEnd = Logger.getRealTimestamp()
