@@ -20,6 +20,7 @@ object FtcLogTuning {
 
     /** If true, issue one bulk read per hub at the start of each loop (after clearBulkCache). */
     @JvmField var prefetchBulkDataEachLoop: Boolean = true
+    @JvmField var prefetchOnlyControlHub: Boolean = false
 
     /**
      * If > 0, wrappers may sample *non-bulk* (generally I2C / ADC / readback) data at this period

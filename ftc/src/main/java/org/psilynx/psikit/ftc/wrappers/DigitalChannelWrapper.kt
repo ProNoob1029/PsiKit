@@ -2,67 +2,50 @@ package org.psilynx.psikit.ftc.wrappers
 
 import com.qualcomm.robotcore.hardware.DigitalChannel
 import com.qualcomm.robotcore.hardware.DigitalChannelController
+import com.qualcomm.robotcore.hardware.DigitalChannelImpl
 import com.qualcomm.robotcore.hardware.HardwareDevice
 import org.psilynx.psikit.ftc.FtcLogTuning
 import org.psilynx.psikit.core.LogTable
+import org.psilynx.psikit.ftc.loggableField
 
 class DigitalChannelWrapper(
-    private val device: DigitalChannel?
+    private val device: DigitalChannel?,
+    name: String = ""
 ) : DigitalChannel, HardwareInput<DigitalChannel> {
+    override var readTime = 0.0
+    override var wrieTime = 0.0
+    override val cacheResets = mutableListOf<() -> Unit>()
+    override val hardwareName = name
 
-    private var _mode  = DigitalChannel.Mode.INPUT
-    private var _state = false
-    private var _deviceName = "MockDigitalChannel"
-    private var _version = 1
-    private var _connectionInfo = ""
-    private var _manufacturer   = HardwareDevice.Manufacturer.Other
+    private var _mode by loggableField(
+        device?.let { it::getMode },
+        DigitalChannel.Mode.INPUT,
+        device?.let { { value -> it.mode = value } }
+    )
+    private var _state by loggableField(
+        device?.let { it::getState },
+        device?.let { it::setState }
+    )
+    private val _connectionInfo by loggableField(device?.let { it::getConnectionInfo })
+    private val _manufacturer by loggableField(device?.let { it::getManufacturer }, HardwareDevice.Manufacturer.Other)
+    private val _deviceName by loggableField(device?.let { it::getDeviceName })
+    private val _version by loggableField(device?.let { it::getVersion })
 
-    override fun new(wrapped: DigitalChannel?) = DigitalChannelWrapper(wrapped)
-
-    override fun toLog(table: LogTable) {
-        device!!
-        _state         = device.state
-
-        if (FtcLogTuning.bulkOnlyLogging) {
-            table.put("state", state)
-            return
-        }
-
-        _mode          = device.mode
-        _deviceName    = device.deviceName
-        _version       = device.version
-        _connectionInfo = device.connectionInfo
-        _manufacturer   = device.manufacturer
-
-        table.put("mode", mode)
-        table.put("state", state)
-        table.put("deviceName", deviceName)
-        table.put("version", version)
-        table.put("connectionInfo", connectionInfo)
-        table.put("manufacturer", manufacturer)
-
-    }
-
-    override fun fromLog(table: LogTable) {
-        _mode           = table.get("mode", DigitalChannel.Mode.INPUT)
-        _state          = table.get("state", false)
-        _deviceName     = table.get("deviceName", "MockDigitalChannel")
-        _version        = table.get("version", 1)
-        _connectionInfo = table.get("connectionInfo", "")
-        _manufacturer   = table.get("manufacturer", HardwareDevice.Manufacturer.Other)
-    }
+    override fun new(wrapped: DigitalChannel?, name: String) = DigitalChannelWrapper(wrapped, name)
 
     override fun getMode() = _mode
-    override fun setMode(mode: DigitalChannel.Mode)
-        = device?.setMode(mode) ?: Unit
+    override fun setMode(mode: DigitalChannel.Mode) {
+        _mode = mode
+    }
 
     @Deprecated("Deprecated in Java")
     override fun setMode(mode: DigitalChannelController.Mode) =
         device?.setMode(mode) ?: Unit
 
     override fun getState() = _state
-    override fun setState(state: Boolean) =
-        device?.setState(state) ?: Unit
+    override fun setState(state: Boolean) {
+        _state = state
+    }
 
     override fun getDeviceName() = _deviceName
     override fun getVersion() = _version

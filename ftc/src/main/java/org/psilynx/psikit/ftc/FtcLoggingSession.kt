@@ -11,6 +11,7 @@ import org.psilynx.psikit.core.rlog.RLOGServer
 import org.psilynx.psikit.core.rlog.RLOGReplay
 import org.psilynx.psikit.core.rlog.RLOGWriter
 import org.psilynx.psikit.ftc.wrappers.AnalogInputWrapper
+import org.psilynx.psikit.ftc.wrappers.ColorDistanceSensorWrapper
 import org.psilynx.psikit.ftc.wrappers.CrServoWrapper
 import org.psilynx.psikit.ftc.wrappers.DigitalChannelWrapper
 import org.psilynx.psikit.ftc.wrappers.HardwareInput
@@ -20,6 +21,7 @@ import org.psilynx.psikit.ftc.wrappers.MotorWrapper
 import org.psilynx.psikit.ftc.wrappers.PinpointWrapper
 import org.psilynx.psikit.ftc.wrappers.ServoWrapper
 import org.psilynx.psikit.ftc.wrappers.SparkFunOTOSWrapper
+import org.psilynx.psikit.ftc.wrappers.VoltageSensorWrapper
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.io.File
@@ -281,6 +283,7 @@ class FtcLoggingSession {
             if (hubs != null) {
                 var prefetchTotalNs = 0L
                 for (hub in hubs) {
+                    if (FtcLogTuning.prefetchOnlyControlHub && hub.isParent.not()) continue
                     val startNs = System.nanoTime()
                     try {
                         hub.bulkData
@@ -385,8 +388,10 @@ class FtcLoggingSession {
             hardwareTotalNs += dtNs
             Logger.recordOutput("PsiKit/logTimes (us)/$key", dtNs / 1_000.0)*/
 
-            hardwareTotalUs += value.
-            Logger.recordOutput("PsiKit/logTimes (us)/$key", dtUs / 1_000.0)
+            val dtUs = 0.0
+
+            hardwareTotalUs += value
+//            Logger.recordOutput("PsiKit/logTimes (us)/$key", dtUs / 1_000.0)
 
             when (value) {
                 is MotorWrapper -> motorUs += dtUs
@@ -395,8 +400,8 @@ class FtcLoggingSession {
                 is AnalogInputWrapper -> analogInputUs += dtUs
                 is DigitalChannelWrapper -> digitalChannelUs += dtUs
                 is ImuWrapper -> imuUs += dtUs
-                is ColorDistanceSeUsorWrapper -> colorDistanceUs += dtUs
-                is VoltageSeUsorWrapper -> voltageSeUsorUs += dtUs
+                is ColorDistanceSensorWrapper -> colorDistanceUs += dtUs
+                is VoltageSensorWrapper -> voltageSeUsorUs += dtUs
                 is PinpointWrapper -> pinpointWrapperUs += dtUs
                 is Limelight3AWrapper -> limelightUs += dtUs
                 is SparkFunOTOSWrapper -> otosUs += dtUs
@@ -455,7 +460,11 @@ class FtcLoggingSession {
         val hubs = allHubs ?: return
         for (hub in hubs) {
             try {
-                hub.bulkCachingMode = MANUAL
+                if (FtcLogTuning.prefetchOnlyControlHub && hub.isParent.not()) {
+                    hub.bulkCachingMode = LynxModule.BulkCachingMode.AUTO
+                } else {
+                    hub.bulkCachingMode = MANUAL
+                }
             } catch (_: Throwable) {
                 // ignore
             }
