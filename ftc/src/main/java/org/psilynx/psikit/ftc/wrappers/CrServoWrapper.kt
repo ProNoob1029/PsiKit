@@ -3,15 +3,10 @@ package org.psilynx.psikit.ftc.wrappers
 import com.qualcomm.robotcore.hardware.CRServoImplEx
 import com.qualcomm.robotcore.hardware.DcMotorSimple
 import com.qualcomm.robotcore.hardware.HardwareDevice
-import com.qualcomm.robotcore.hardware.NormalizedColorSensor
-import com.qualcomm.robotcore.hardware.NormalizedRGBA
 import com.qualcomm.robotcore.hardware.PwmControl
 import com.qualcomm.robotcore.hardware.ServoController
 import com.qualcomm.robotcore.hardware.ServoControllerEx
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.ServoConfigurationType
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit
-import org.psilynx.psikit.ftc.FtcLogTuning
-import org.psilynx.psikit.core.LogTable
 import org.psilynx.psikit.ftc.loggableField
 
 class CrServoWrapper(private val device: CRServoImplEx?, name: String = ""):
@@ -52,7 +47,8 @@ class CrServoWrapper(private val device: CRServoImplEx?, name: String = ""):
     )
     private var _power by loggableField(
         device?.let { it::getPower },
-        device?.let { it::setPower }
+        device?.let { it::setPower },
+        rateLimitSetting = true
     )
     private var _pwmRange by loggableField(
         device?.let { it::getPwmRange },
@@ -84,7 +80,7 @@ class CrServoWrapper(private val device: CRServoImplEx?, name: String = ""):
 
     override fun new(wrapped: CRServoImplEx?, name: String) = CrServoWrapper(wrapped, name)
 
-    override fun getDirection() = _direction
+    override fun getDirection(): DcMotorSimple.Direction = _direction
 
     override fun setDirection(direction: DcMotorSimple.Direction) {
         _direction = direction
@@ -108,7 +104,7 @@ class CrServoWrapper(private val device: CRServoImplEx?, name: String = ""):
     override fun getDeviceName() = _deviceName
     override fun getVersion() = _version
     override fun getConnectionInfo() = _connectionInfo
-    override fun getManufacturer() = _manufacturer
+    override fun getManufacturer(): HardwareDevice.Manufacturer = _manufacturer
 
     override fun close() { device?.close() }
     override fun resetDeviceConfigurationForOpMode() {

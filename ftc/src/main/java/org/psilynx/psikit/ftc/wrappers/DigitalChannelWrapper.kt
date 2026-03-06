@@ -2,10 +2,7 @@ package org.psilynx.psikit.ftc.wrappers
 
 import com.qualcomm.robotcore.hardware.DigitalChannel
 import com.qualcomm.robotcore.hardware.DigitalChannelController
-import com.qualcomm.robotcore.hardware.DigitalChannelImpl
 import com.qualcomm.robotcore.hardware.HardwareDevice
-import org.psilynx.psikit.ftc.FtcLogTuning
-import org.psilynx.psikit.core.LogTable
 import org.psilynx.psikit.ftc.loggableField
 
 class DigitalChannelWrapper(
@@ -33,11 +30,12 @@ class DigitalChannelWrapper(
 
     override fun new(wrapped: DigitalChannel?, name: String) = DigitalChannelWrapper(wrapped, name)
 
-    override fun getMode() = _mode
+    override fun getMode(): DigitalChannel.Mode = _mode
     override fun setMode(mode: DigitalChannel.Mode) {
         _mode = mode
     }
 
+    @Suppress("DEPRECATION")
     @Deprecated("Deprecated in Java")
     override fun setMode(mode: DigitalChannelController.Mode) =
         device?.setMode(mode) ?: Unit
@@ -50,7 +48,7 @@ class DigitalChannelWrapper(
     override fun getDeviceName() = _deviceName
     override fun getVersion() = _version
     override fun getConnectionInfo() = _connectionInfo
-    override fun getManufacturer() = _manufacturer
+    override fun getManufacturer(): HardwareDevice.Manufacturer = _manufacturer
 
     override fun close() { device?.close() }
     override fun resetDeviceConfigurationForOpMode() {

@@ -16,13 +16,13 @@ class AnalogInputWrapper(
     private val _manufacturer by loggableField(device?.let { it::getManufacturer }, HardwareDevice.Manufacturer.Other)
     private val _deviceName by loggableField(device?.let { it::getDeviceName })
     private val _version by loggableField(device?.let { it::getVersion })
-    private val _maxVoltage by loggableField(device?.let { it::getMaxVoltage })
-    private val _voltage by loggableField(device?.let { it::getVoltage })
+    private val _maxVoltage by loggableField(device?.let { it::getMaxVoltage }, unit = "volt")
+    private val _voltage by loggableField(device?.let { it::getVoltage }, unit = "volt")
 
     override fun new(wrapped: AnalogInput?, name: String) = AnalogInputWrapper(wrapped, name)
 
     override fun getConnectionInfo() = _connectionInfo
-    override fun getManufacturer()   = _manufacturer
+    override fun getManufacturer(): HardwareDevice.Manufacturer = _manufacturer
     override fun getMaxVoltage()     = _maxVoltage
     override fun getDeviceName()     = _deviceName
     override fun getVoltage()        = _voltage

@@ -1,15 +1,12 @@
 package org.psilynx.psikit.ftc.wrappers
 
-import com.qualcomm.robotcore.hardware.DistanceSensor
 import com.qualcomm.robotcore.hardware.ColorSensor
+import com.qualcomm.robotcore.hardware.DistanceSensor
 import com.qualcomm.robotcore.hardware.HardwareDevice
 import com.qualcomm.robotcore.hardware.I2cAddr
-import com.qualcomm.robotcore.hardware.NormalizedRGBA
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor
+import com.qualcomm.robotcore.hardware.NormalizedRGBA
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit
-import org.psilynx.psikit.ftc.FtcLogTuning
-import org.psilynx.psikit.core.LogTable
-import org.psilynx.psikit.core.Logger
 import org.psilynx.psikit.ftc.loggableField
 
 /**
@@ -32,7 +29,7 @@ class ColorDistanceSensorWrapper(
     private val _deviceName by loggableField(device?.let { it::getDeviceName })
     private val _version by loggableField(device?.let { it::getVersion })
 
-    private val _normalized by loggableField(
+    private val _normalizedColors by loggableField(
         (device as? NormalizedColorSensor)?.let { it::getNormalizedColors },
         NormalizedRGBA(),
         { table, value: NormalizedRGBA, name ->
@@ -54,11 +51,12 @@ class ColorDistanceSensorWrapper(
         }
     )
 //    private var _gain: Float = 0.0f
-    private val _distanceMeters: Double by loggableField(
-    (device as? DistanceSensor)?.let {
-        @Suppress("USELESS_CAST")
-        { it.getDistance(DistanceUnit.METER) } as () -> Double
-    }
+    @Suppress("RemoveExplicitTypeArguments")
+    private val _distance: Double by loggableField(
+    (device as? DistanceSensor)?.let<DistanceSensor, () -> Double> {
+        { it.getDistance(DistanceUnit.METER) }
+    },
+        unit = "meter"
     )
 
     private var _gain by loggableField(
@@ -73,20 +71,20 @@ class ColorDistanceSensorWrapper(
 
     override fun new(wrapped: HardwareDevice?, name: String) = ColorDistanceSensorWrapper(wrapped, name)
 
-    override fun getNormalizedColors() = _normalized
+    override fun getNormalizedColors() = _normalizedColors
     override fun getGain() = _gain
     override fun setGain(newGain: Float) {
         _gain = newGain
     }
 
     // ColorSensor compatibility: scale normalized [0..1] into [0..255] like typical SDK sensors.
-    override fun red() = (_normalized.red * 255.0f).toInt().coerceIn(0, 255)
+    override fun red() = (_normalizedColors.red * 255.0f).toInt().coerceIn(0, 255)
 
-    override fun green() = (_normalized.green * 255.0f).toInt().coerceIn(0, 255)
+    override fun green() = (_normalizedColors.green * 255.0f).toInt().coerceIn(0, 255)
 
-    override fun blue() = (_normalized.blue * 255.0f).toInt().coerceIn(0, 255)
+    override fun blue() = (_normalizedColors.blue * 255.0f).toInt().coerceIn(0, 255)
 
-    override fun alpha() = (_normalized.alpha * 255.0f).toInt().coerceIn(0, 255)
+    override fun alpha() = (_normalizedColors.alpha * 255.0f).toInt().coerceIn(0, 255)
 
     override fun argb(): Int {
         val a = alpha()
@@ -103,7 +101,7 @@ class ColorDistanceSensorWrapper(
 
     override fun setI2cAddress(newAddress: I2cAddr?) {
         val color = device as? ColorSensor
-        color?.setI2cAddress(newAddress)
+        color?.i2cAddress = newAddress
     }
 
     override fun getI2cAddress(): I2cAddr {
@@ -111,7 +109,7 @@ class ColorDistanceSensorWrapper(
         return color?.i2cAddress ?: I2cAddr(0)
     }
 
-    override fun getDistance(unit: DistanceUnit) = unit.fromUnit(DistanceUnit.METER, _distanceMeters)
+    override fun getDistance(unit: DistanceUnit) = unit.fromUnit(DistanceUnit.METER, _distance)
 
     override fun getConnectionInfo(): String = _connectionInfo
 

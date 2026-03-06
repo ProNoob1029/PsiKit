@@ -5,45 +5,80 @@ import com.qualcomm.hardware.limelightvision.LLResult
 import com.qualcomm.hardware.limelightvision.LLResultTypes.CalibrationResult
 import com.qualcomm.hardware.limelightvision.LLStatus
 import com.qualcomm.hardware.limelightvision.Limelight3A
-import com.qualcomm.hardware.limelightvision.PsiKitLimelightJsonFactory
+import com.qualcomm.hardware.limelightvision.PsiKitLimelightJsonFactory.resultFromJson
+import com.qualcomm.hardware.limelightvision.PsiKitLimelightJsonFactory.statusFromJson
 import com.qualcomm.robotcore.hardware.HardwareDevice
 import org.firstinspires.ftc.robotcore.internal.usb.EthernetOverUsbSerialNumber
+import org.json.JSONArray
 import org.json.JSONObject
-import org.psilynx.psikit.ftc.FtcLogTuning
 import org.psilynx.psikit.core.LogTable
 import org.psilynx.psikit.core.Logger
 import org.psilynx.psikit.core.wpi.math.Pose2d
 import org.psilynx.psikit.core.wpi.math.Pose3d
 import org.psilynx.psikit.core.wpi.math.Rotation2d
-import java.lang.reflect.Field
+import org.psilynx.psikit.ftc.loggableField
 import java.net.InetAddress
 
 class Limelight3AWrapper(
-    private val device: Limelight3A?
+    private val device: Limelight3A?,
+    name: String = ""
 ) : Limelight3A(
     EthernetOverUsbSerialNumber.fromIpAddress("127.0.0.1", "psikit"),
     device?.deviceName ?: "MockLimelight3A",
     InetAddress.getLoopbackAddress()
 ), HardwareInput<Limelight3A> {
+    override var readTime = 0.0
+    override var wrieTime = 0.0
+    override val cacheResets = mutableListOf<() -> Unit>()
+    override val hardwareName = name
 
-    private var cachedResultJson: String = ""
-    private var cachedResultTimestampMs: Long = 0L
-    private var cachedStatusJson: String = ""
+    private val latestResult by loggableField(
+        device?.let { it::getLatestResult },
+        resultFromJson("", 0L),
+        { table, value: LLResult, name ->
+            val subTable = table.getSubtable(name)
+            val jsonString = value.toString()
+            subTable.put("json", jsonString)
+            subTable.put("controlHubTimeStamp", LogTable.LogValue(value.controlHubTimeStamp, "ms"))
 
-    private var cachedRunning: Boolean = false
-    private var cachedConnected: Boolean = false
+            putDerivedResultFields(table, jsonString)
+        },
+        { table, name ->
+            val subTable = table.getSubtable(name)
+            resultFromJson(
+                subTable.get("json", ""),
+                subTable.get("controlHubTimeStamp", 0L)
+            ) ?: resultFromJson("", 0L)
+        }
+    )
 
-    private var cachedManufacturer: HardwareDevice.Manufacturer = HardwareDevice.Manufacturer.Other
-    private var cachedDeviceName: String = device?.deviceName ?: "MockLimelight3A"
-    private var cachedConnectionInfo: String = ""
-    private var cachedVersion: Int = 1
+    private val status by loggableField(
+        device?.let { it::getStatus },
+        LLStatus(),
+        { table, value: LLStatus, name ->
+            val subTable = table.getSubtable(name)
+            val jsonString = value.toJsonString()
+            subTable.put("json", jsonString)
+        },
+        { table, name ->
+            val subTable = table.getSubtable(name)
+            statusFromJson(
+                subTable.get("json", ""),
+            ) ?: LLStatus()
+        }
+    )
 
-    @Volatile private var replayResult: LLResult? = null
-    @Volatile private var replayStatus: LLStatus? = null
+    private val running by loggableField(device?.let { it::isRunning })
+    private val connected by loggableField(device?.let { it::isConnected })
 
-    override fun new(wrapped: Limelight3A?) = Limelight3AWrapper(wrapped)
+    private val _connectionInfo by loggableField(device?.let { it::getConnectionInfo })
+    private val _manufacturer by loggableField(device?.let { it::getManufacturer }, HardwareDevice.Manufacturer.Other)
+    private val _deviceName by loggableField(device?.let { it::getDeviceName })
+    private val _version by loggableField(device?.let { it::getVersion })
 
-    private fun putPose2dAnd3dFromJsonPose6(table: LogTable, keyPrefix: String, arr: org.json.JSONArray?) {
+    override fun new(wrapped: Limelight3A?, name: String) = Limelight3AWrapper(wrapped, name)
+
+    private fun putPose2dAnd3dFromJsonPose6(table: LogTable, keyPrefix: String, arr: JSONArray?) {
         if (arr == null || arr.length() < 6) return
         val x = arr.optDouble(0, 0.0)
         val y = arr.optDouble(1, 0.0)
@@ -99,105 +134,9 @@ class Limelight3AWrapper(
         }
     }
 
-    override fun toLog(table: LogTable) {
-        if (FtcLogTuning.bulkOnlyLogging) {
-            return
-        }
-
-        // Avoid extra network calls here. The overrides for getLatestResult/getStatus will
-        // opportunistically refresh caches when user code calls them.
-        if (device != null) {
-            try {
-                cachedRunning = device.isRunning
-            } catch (_: Throwable) {}
-            try {
-                cachedConnected = device.isConnected
-            } catch (_: Throwable) {}
-            try {
-                captureResultJson(device.latestResult)
-            } catch (_: Throwable) {}
-            try {
-                cachedManufacturer = device.manufacturer
-                cachedDeviceName = device.deviceName
-                cachedConnectionInfo = device.connectionInfo
-                cachedVersion = device.version
-            } catch (_: Throwable) {}
-        }
-
-        table.put("running", cachedRunning)
-        table.put("connected", cachedConnected)
-        table.put("resultJson", cachedResultJson)
-        table.put("resultTimestampMs", cachedResultTimestampMs)
-        table.put("statusJson", cachedStatusJson)
-
-        putDerivedResultFields(table, cachedResultJson)
-
-        table.put("deviceName", cachedDeviceName)
-        table.put("connectionInfo", cachedConnectionInfo)
-        table.put("version", cachedVersion)
-        table.put("manufacturer", cachedManufacturer)
-    }
-
-    override fun fromLog(table: LogTable) {
-        cachedRunning = table.get("running", false)
-        cachedConnected = table.get("connected", false)
-        cachedResultJson = table.get("resultJson", "")
-        cachedResultTimestampMs = table.get("resultTimestampMs", 0L)
-        cachedStatusJson = table.get("statusJson", "")
-
-        cachedDeviceName = table.get("deviceName", "MockLimelight3A")
-        cachedConnectionInfo = table.get("connectionInfo", "")
-        cachedVersion = table.get("version", 1)
-        cachedManufacturer = table.get("manufacturer", HardwareDevice.Manufacturer.Other)
-
-        replayResult = PsiKitLimelightJsonFactory.resultFromJson(cachedResultJson, cachedResultTimestampMs)
-        replayStatus = PsiKitLimelightJsonFactory.statusFromJson(cachedStatusJson)
-    }
-
-    private fun captureResultJson(result: LLResult?) {
-        if (result == null) {
-            cachedResultJson = ""
-            cachedResultTimestampMs = 0L
-            return
-        }
-        cachedResultTimestampMs = try {
-            result.controlHubTimeStamp
-        } catch (_: Throwable) {
-            System.currentTimeMillis()
-        }
-
-        // LLResult doesn't expose the raw JSON; pull it via reflection so replay can reconstruct
-        // full-fidelity result objects.
-        cachedResultJson = try {
-            val f: Field = LLResult::class.java.getDeclaredField("jsonData")
-            f.isAccessible = true
-            val obj = f.get(result)
-            (obj as? JSONObject)?.toString() ?: ""
-        } catch (_: Throwable) {
-            // Fallback to minimal JSON for common getters.
-            try {
-                JSONObject()
-                    .put("tx", result.tx)
-                    .put("ty", result.ty)
-                    .put("ta", result.ta)
-                    .put("ts", result.timestamp)
-                    .put("v", if (result.isValid) 1 else 0)
-                    .put("pID", result.pipelineIndex)
-                    .put("pipelineType", result.pipelineType)
-                    .toString()
-            } catch (_: Throwable) {
-                ""
-            }
-        }
-    }
-
-    private fun captureStatusJson(status: LLStatus?) {
-        if (status == null) {
-            cachedStatusJson = ""
-            return
-        }
-        cachedStatusJson = try {
-            val q = status.cameraQuat
+    private fun LLStatus.toJsonString(): String {
+        return try {
+            val q = cameraQuat
             JSONObject()
                 .put(
                     "cameraQuat",
@@ -207,18 +146,18 @@ class Limelight3AWrapper(
                         .put("y", q.y)
                         .put("z", q.z)
                 )
-                .put("cid", status.cid)
-                .put("cpu", status.cpu)
-                .put("finalYaw", status.finalYaw)
-                .put("fps", status.fps)
-                .put("hwType", status.hwType)
-                .put("name", status.name)
-                .put("pipeImgCount", status.pipeImgCount)
-                .put("pipelineIndex", status.pipelineIndex)
-                .put("pipelineType", status.pipelineType)
-                .put("ram", status.ram)
-                .put("snapshotMode", status.snapshotMode)
-                .put("temp", status.temp)
+                .put("cid", cid)
+                .put("cpu", cpu)
+                .put("finalYaw", finalYaw)
+                .put("fps", fps)
+                .put("hwType", hwType)
+                .put("name", name)
+                .put("pipeImgCount", pipeImgCount)
+                .put("pipelineIndex", pipelineIndex)
+                .put("pipelineType", pipelineType)
+                .put("ram", ram)
+                .put("snapshotMode", snapshotMode)
+                .put("temp", temp)
                 .toString()
         } catch (_: Throwable) {
             ""
@@ -231,7 +170,7 @@ class Limelight3AWrapper(
         if (Logger.isReplay()) return
         try {
             device?.start()
-            cachedRunning = device?.isRunning ?: cachedRunning
+//            cachedRunning = device?.isRunning ?: cachedRunning
         } catch (_: Throwable) {
             // ignore
         }
@@ -241,7 +180,7 @@ class Limelight3AWrapper(
         if (Logger.isReplay()) return
         try {
             device?.pause()
-            cachedRunning = device?.isRunning ?: cachedRunning
+//            cachedRunning = device?.isRunning ?: cachedRunning
         } catch (_: Throwable) {
             // ignore
         }
@@ -251,20 +190,13 @@ class Limelight3AWrapper(
         if (Logger.isReplay()) return
         try {
             device?.stop()
-            cachedRunning = device?.isRunning ?: cachedRunning
+//            cachedRunning = device?.isRunning ?: cachedRunning
         } catch (_: Throwable) {
             // ignore
         }
     }
 
-    override fun isRunning(): Boolean {
-        if (Logger.isReplay()) return cachedRunning
-        return try {
-            device?.isRunning ?: cachedRunning
-        } catch (_: Throwable) {
-            cachedRunning
-        }
-    }
+    override fun isRunning() = running
 
     override fun setPollRateHz(rateHz: Int) {
         if (Logger.isReplay()) return
@@ -284,42 +216,11 @@ class Limelight3AWrapper(
         }
     }
 
-    override fun isConnected(): Boolean {
-        if (Logger.isReplay()) return cachedConnected
-        return try {
-            device?.isConnected ?: cachedConnected
-        } catch (_: Throwable) {
-            cachedConnected
-        }
-    }
+    override fun isConnected() = connected
 
-    override fun getLatestResult(): LLResult? {
-        if (Logger.isReplay() || device == null) {
-            return replayResult
-        }
+    override fun getLatestResult(): LLResult = latestResult
 
-        val r = try {
-            device.latestResult
-        } catch (_: Throwable) {
-            null
-        }
-        captureResultJson(r)
-        return r
-    }
-
-    override fun getStatus(): LLStatus {
-        if (Logger.isReplay() || device == null) {
-            return replayStatus ?: LLStatus()
-        }
-
-        val s = try {
-            device.status
-        } catch (_: Throwable) {
-            null
-        }
-        captureStatusJson(s)
-        return s ?: LLStatus()
-    }
+    override fun getStatus(): LLStatus = status
 
     override fun reloadPipeline(): Boolean {
         if (Logger.isReplay()) return false
@@ -476,41 +377,13 @@ class Limelight3AWrapper(
 
     // --- HardwareDevice overrides ---
 
-    override fun getManufacturer(): HardwareDevice.Manufacturer {
-        if (Logger.isReplay()) return cachedManufacturer
-        return try {
-            device?.manufacturer ?: cachedManufacturer
-        } catch (_: Throwable) {
-            cachedManufacturer
-        }
-    }
+    override fun getManufacturer(): HardwareDevice.Manufacturer = _manufacturer
 
-    override fun getDeviceName(): String {
-        if (Logger.isReplay()) return cachedDeviceName
-        return try {
-            device?.deviceName ?: cachedDeviceName
-        } catch (_: Throwable) {
-            cachedDeviceName
-        }
-    }
+    override fun getDeviceName() = _deviceName
 
-    override fun getConnectionInfo(): String {
-        if (Logger.isReplay()) return cachedConnectionInfo
-        return try {
-            device?.connectionInfo ?: cachedConnectionInfo
-        } catch (_: Throwable) {
-            cachedConnectionInfo
-        }
-    }
+    override fun getConnectionInfo() = _connectionInfo
 
-    override fun getVersion(): Int {
-        if (Logger.isReplay()) return cachedVersion
-        return try {
-            device?.version ?: cachedVersion
-        } catch (_: Throwable) {
-            cachedVersion
-        }
-    }
+    override fun getVersion() = _version
 
     override fun resetDeviceConfigurationForOpMode() {
         if (Logger.isReplay()) return

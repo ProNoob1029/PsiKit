@@ -11,7 +11,7 @@ public final class PsiKitLimelightJsonFactory {
   private PsiKitLimelightJsonFactory() {}
 
   public static LLResult resultFromJson(String json, long controlHubTimestampMs) {
-    if (json == null || json.trim().isEmpty()) return null;
+    if (json == null || json.trim().isEmpty()) return LLResult.parse(new JSONObject());
     try {
       LLResult r = new LLResult(new JSONObject(json));
       // package-private in LLResult; accessible here

@@ -14,7 +14,8 @@ class LoggableCachedField<T>(
     private val set: ((T) -> Unit)?,
     default: T,
     private val toLog: (table: LogTable, value: T, name: String) -> Unit,
-    private val fromLog: (table: LogTable, name: String) -> T
+    private val fromLog: (table: LogTable, name: String) -> T,
+    private val rateLimitSetting: Boolean = false
 ): LoggableInputs {
     init {
         parent.cacheResets.add(::resetCache)
@@ -22,7 +23,7 @@ class LoggableCachedField<T>(
 
     private var hasBeenSet = false
     private var hasBeenGet = false
-    private var cache = get?.invoke() ?: default
+    private var cache = default
     private var name = ""
 
     override fun toLog(table: LogTable) {
@@ -34,9 +35,8 @@ class LoggableCachedField<T>(
     }
 
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
-        if (hasBeenSet) return
+        if (hasBeenSet && rateLimitSetting) return
         hasBeenSet = true
-        hasBeenGet = false
         parent.wrieTime += measureTimeUs {
             set?.invoke(value)
         }
@@ -69,34 +69,40 @@ fun LoggableHardware.loggableField(get: (() -> Boolean)?, set: ((Boolean) -> Uni
         { table, name -> table.get(name, false) }
     )
 
-fun LoggableHardware.loggableField(get: (() -> Int)?, set: ((Int) -> Unit)? = null) =
+fun LoggableHardware.loggableField(get: (() -> Int)?, set: ((Int) -> Unit)? = null, unit: String = "") =
     LoggableCachedField(
         this,
         get,
         set,
         0,
-        { table, value, name -> table.put(name, value) },
+        { table, value, name -> table.put(name, LogTable.LogValue(value.toLong(), unit)) },
         { table, name -> table.get(name, 0) }
     )
 
-fun LoggableHardware.loggableField(get: (() -> Float)?, set: ((Float) -> Unit)? = null) =
+fun LoggableHardware.loggableField(get: (() -> Float)?, set: ((Float) -> Unit)? = null, unit: String = "") =
     LoggableCachedField(
         this,
         get,
         set,
         0f,
-        { table, value, name -> table.put(name, value) },
+        { table, value, name -> table.put(name, LogTable.LogValue(value, unit)) },
         { table, name -> table.get(name, 0f) }
     )
 
-fun LoggableHardware.loggableField(get: (() -> Double)?, set: ((Double) -> Unit)? = null) =
+fun LoggableHardware.loggableField(
+    get: (() -> Double)?,
+    set: ((Double) -> Unit)? = null,
+    unit: String = "",
+    rateLimitSetting: Boolean = false
+) =
     LoggableCachedField(
         this,
         get,
         set,
         0.0,
-        { table, value, name -> table.put(name, value) },
-        { table, name -> table.get(name, 0.0) }
+        { table, value, name -> table.put(name, LogTable.LogValue(value, unit)) },
+        { table, name -> table.get(name, 0.0) },
+        rateLimitSetting
     )
 
 fun LoggableHardware.loggableField(get: (() -> String)?, set: ((String) -> Unit)? = null) =
