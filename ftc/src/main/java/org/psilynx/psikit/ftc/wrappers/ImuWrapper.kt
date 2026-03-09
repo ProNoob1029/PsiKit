@@ -30,20 +30,20 @@ class ImuWrapper(
         YawPitchRollAngles(AngleUnit.RADIANS, 0.0, 0.0, 0.0, 0L),
         { table, value: YawPitchRollAngles, name ->
             val subTable = table.getSubtable(name)
-            subTable.put("yaw", LogTable.LogValue(value.yaw, "deg"))
-            subTable.put("pitch", LogTable.LogValue(value.pitch, "deg"))
-            subTable.put("roll", LogTable.LogValue(value.roll, "deg"))
-            subTable.put("acquisitionTime", LogTable.LogValue(value.acquisitionTime, "ns"))
+            subTable.put("yaw deg", value.yaw)
+            subTable.put("pitch deg", value.pitch)
+            subTable.put("roll deg", value.roll)
+            subTable.put("acquisitionTime ns", value.acquisitionTime)
 
         },
         { table, name ->
             val subTable = table.getSubtable(name)
             YawPitchRollAngles(
                 AngleUnit.DEGREES,
-                subTable.get("yaw", 0.0),
-                subTable.get("pitch", 0.0),
-                subTable.get("roll", 0.0),
-                subTable.get("acquisitionTime", 0L)
+                subTable.get("yaw deg", 0.0),
+                subTable.get("pitch deg", 0.0),
+                subTable.get("roll deg", 0.0),
+                subTable.get("acquisitionTime ns", 0L)
             )
         }
     )
@@ -53,20 +53,20 @@ class ImuWrapper(
         AngularVelocity(AngleUnit.DEGREES, 0f, 0f, 0f, 0L),
         { table, value: AngularVelocity, name ->
             val subTable = table.getSubtable(name)
-            subTable.put("xRotationRate", LogTable.LogValue(value.xRotationRate, "deg per sec"))
-            subTable.put("yRotationRate", LogTable.LogValue(value.yRotationRate, "deg per sec"))
-            subTable.put("zRotationRate", LogTable.LogValue(value.zRotationRate, "deg per sec"))
-            subTable.put("acquisitionTime", LogTable.LogValue(value.acquisitionTime, "ns"))
+            subTable.put("xRotationRate deg per sec", value.xRotationRate)
+            subTable.put("yRotationRate deg per sec", value.yRotationRate)
+            subTable.put("zRotationRate deg per sec", value.zRotationRate)
+            subTable.put("acquisitionTime ns", value.acquisitionTime)
 
         },
         { table, name ->
             val subTable = table.getSubtable(name)
             AngularVelocity(
                 AngleUnit.DEGREES,
-                subTable.get("xRotationRate", 0f),
-                subTable.get("yRotationRate", 0f),
-                subTable.get("zRotationRate", 0f),
-                subTable.get("acquisitionTime", 0L)
+                subTable.get("xRotationRate deg per sec", 0f),
+                subTable.get("yRotationRate deg per sec", 0f),
+                subTable.get("zRotationRate deg per sec", 0f),
+                subTable.get("acquisitionTime ns", 0L)
             )
         }
     )

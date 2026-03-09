@@ -53,10 +53,10 @@ class PinpointWrapper(
         var value: Float = 0F
     ): LoggableInputs {
         override fun toLog(table: LogTable) {
-            table.put(fieldName, LogTable.LogValue(value, "mm"))
+            table.put("$fieldName mm", value)
         }
         override fun fromLog(table: LogTable) {
-            value = table.get(fieldName, value)
+            value = table.get("$fieldName mm", value)
         }
     }
     private var cachedXOffsetMm = LoggedFloat("xOffsetMm")
@@ -107,16 +107,16 @@ class PinpointWrapper(
 
         table.put("xEncoderValue", cachedXEncoderValue)
         table.put("yEncoderValue", cachedYEncoderValue)
-        table.put("loopTime", LogTable.LogValue(cachedLoopTime.toDouble(), "us"))
+        table.put("loopTime us", cachedLoopTime)
         table.put("deviceStatus", cachedDeviceStatus)
 
-        table.put("xPosition", LogTable.LogValue(cachedXPositionMm, "mm"))
-        table.put("yPosition", LogTable.LogValue(cachedYPositionMm, "mm"))
-        table.put("hOrientation", LogTable.LogValue(cachedHOrientationRad, "rad"))
+        table.put("xPosition mm", cachedXPositionMm)
+        table.put("yPosition mm", cachedYPositionMm)
+        table.put("hOrientation rad", cachedHOrientationRad)
 
-        table.put("xVelocity", LogTable.LogValue(cachedXVelocityMm, "mm per sec"))
-        table.put("yVelocity", LogTable.LogValue(cachedYVelocityMm, "mm per sec"))
-        table.put("hVelocity", LogTable.LogValue(cachedHVelocityRad, "mm per sec"))
+        table.put("xVelocity mm per sec", cachedXVelocityMm)
+        table.put("yVelocity mm per sec", cachedYVelocityMm)
+        table.put("hVelocity rad per sec", cachedHVelocityRad)
 
         val xMeters = cachedXPositionMm / 1000.0
         val yMeters = cachedYPositionMm / 1000.0
@@ -135,7 +135,7 @@ class PinpointWrapper(
     fun bulkFromLog(table: LogTable) {
         cachedXEncoderValue = table.get("xEncoderValue", cachedXEncoderValue)
         cachedYEncoderValue = table.get("yEncoderValue", cachedYEncoderValue)
-        cachedLoopTime = table.get("loopTime", cachedLoopTime)
+        cachedLoopTime = table.get("loopTime us", cachedLoopTime)
 
         cachedDeviceStatus = try {
             table.get("deviceStatus", cachedDeviceStatus)
@@ -143,13 +143,13 @@ class PinpointWrapper(
             cachedDeviceStatus
         }
 
-        cachedXPositionMm = table.get("xPosition", cachedXPositionMm)
-        cachedYPositionMm = table.get("yPosition", cachedYPositionMm)
-        cachedHOrientationRad = table.get("hOrientation", cachedHOrientationRad)
+        cachedXPositionMm = table.get("xPosition mm", cachedXPositionMm)
+        cachedYPositionMm = table.get("yPosition mm", cachedYPositionMm)
+        cachedHOrientationRad = table.get("hOrientation rad", cachedHOrientationRad)
 
-        cachedXVelocityMm = table.get("xVelocity", cachedXVelocityMm)
-        cachedYVelocityMm = table.get("yVelocity", cachedYVelocityMm)
-        cachedHVelocityRad = table.get("hVelocity", cachedHVelocityRad)
+        cachedXVelocityMm = table.get("xVelocity mm per sec", cachedXVelocityMm)
+        cachedYVelocityMm = table.get("yVelocity mm per sec", cachedYVelocityMm)
+        cachedHVelocityRad = table.get("hVelocity rad per sec", cachedHVelocityRad)
     }
 
     // ---- Replay-safe overrides (delegate to real device when present) ----

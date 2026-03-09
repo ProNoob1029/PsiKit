@@ -43,7 +43,7 @@ class Limelight3AWrapper(
             val subTable = table.getSubtable(name)
             val jsonString = value.toString()
             subTable.put("json", jsonString)
-            subTable.put("controlHubTimeStamp", LogTable.LogValue(value.controlHubTimeStamp, "ms"))
+            subTable.put("controlHubTimeStamp ms", value.controlHubTimeStamp)
 
             putDerivedResultFields(table, jsonString)
         },
@@ -51,7 +51,7 @@ class Limelight3AWrapper(
             val subTable = table.getSubtable(name)
             resultFromJson(
                 subTable.get("json", ""),
-                subTable.get("controlHubTimeStamp", 0L)
+                subTable.get("controlHubTimeStamp ms", 0L)
             ) ?: resultFromJson("", 0L)
         }
     )

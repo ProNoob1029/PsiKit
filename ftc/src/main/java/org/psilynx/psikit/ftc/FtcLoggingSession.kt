@@ -259,7 +259,7 @@ class FtcLoggingSession {
         clearBulkCaches()
         val clearEndNs = System.nanoTime()
         Logger.recordOutput(
-            "PsiKit/sessionTimes (us)/ClearBulkCaches",
+            "PsiKit/sessionTimes (us)/ClearBulkCaches us",
             (clearEndNs - clearStartNs) / 1_000.0
         )
 
@@ -291,13 +291,13 @@ class FtcLoggingSession {
                     }
 
                     Logger.recordOutput(
-                        "PsiKit/logTimes (us)/BulkPrefetch/$hubId",
+                        "PsiKit/logTimes (us)/BulkPrefetch/$hubId us",
                         (endNs - startNs) / 1_000.0
                     )
                 }
 
                 Logger.recordOutput(
-                    "PsiKit/sessionTimes (us)/BulkPrefetchTotal",
+                    "PsiKit/sessionTimes (us)/BulkPrefetchTotal us",
                     prefetchTotalNs / 1_000.0
                 )
             }
@@ -321,7 +321,7 @@ class FtcLoggingSession {
 
         val opModeControlsEndNs = System.nanoTime()
         Logger.recordOutput(
-            "PsiKit/sessionTimes (us)/OpModeControls",
+            "PsiKit/sessionTimes (us)/OpModeControls us",
             (opModeControlsEndNs - opModeControlsStartNs) / 1_000.0
         )
 
@@ -330,7 +330,7 @@ class FtcLoggingSession {
         driverStationLogger.log(opMode.gamepad1, opMode.gamepad2)
         val dsEndNs = System.nanoTime()
         Logger.recordOutput(
-            "PsiKit/sessionTimes (us)/DriverStation",
+            "PsiKit/sessionTimes (us)/DriverStation us",
             (dsEndNs - dsStartNs) / 1_000.0
         )
 
@@ -348,11 +348,15 @@ class FtcLoggingSession {
 //            )
 //        }
 
+        for ((_, value) in HardwareMapWrapper.devicesToProcess) {
+            value.onceBeforeLoop()
+        }
+
         val loopEndNs = System.nanoTime()
 
         Logger.recordOutput(
-            "PsiKit/sessionTimes (us)/LogOnceBeforeLoopTotal",
-            LogTable.LogValue((loopEndNs - loopStartNs) / 1_000.0, "us")
+            "PsiKit/sessionTimes (us)/LogOnceBeforeLoopTotal us",
+            (loopEndNs - loopStartNs) / 1_000.0
         )
     }
 
@@ -401,8 +405,8 @@ class FtcLoggingSession {
             val writeUs = value.wrieTime
             val readUs = value.readTime
 //            val totalUs = readUs + writeUs
-            Logger.recordOutput("PsiKit/logtimes (us)/$key/read", LogTable.LogValue(readUs, "us"))
-            Logger.recordOutput("PsiKit/logtimes (us)/$key/write", LogTable.LogValue(writeUs, "us"))
+            Logger.recordOutput("PsiKit/logtimes (us)/$key/read us", readUs)
+            Logger.recordOutput("PsiKit/logtimes (us)/$key/write us", writeUs)
 //            Logger.recordOutput("PsiKit/logtimes (us)/$key/write", LogTable.LogValue(totalUs, "us"))
 
 
@@ -472,50 +476,50 @@ class FtcLoggingSession {
             }
         }
         Logger.recordOutput(
-            "PsiKit/sessionTimes (us)/HardwareMapTotal/read",
-            LogTable.LogValue(hardwareTotalUsRead, "us")
+            "PsiKit/sessionTimes (us)/HardwareMapTotal/read us",
+            hardwareTotalUsRead
         )
 
         Logger.recordOutput(
-            "PsiKit/sessionTimes (us)/HardwareMapTotal/write",
-            LogTable.LogValue(hardwareTotalUsWrite, "us")
+            "PsiKit/sessionTimes (us)/HardwareMapTotal/write us",
+            hardwareTotalUsWrite
         )
 
         // Higher-level breakdown to identify where HardwareMapTotal spikes come from.
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Motor/read", LogTable.LogValue(motorUsRead, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Servo/read",  LogTable.LogValue(servoUsRead, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/CrServo/read",  LogTable.LogValue(crServoUsRead, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/AnalogInput/read",  LogTable.LogValue(analogInputUsRead, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/DigitalChannel/read",  LogTable.LogValue(digitalChannelUsRead, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Imu/read",  LogTable.LogValue(imuUsRead, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/ColorDistance/read",  LogTable.LogValue(colorDistanceUsRead, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/VoltageSensor/read",  LogTable.LogValue(voltageSeUsorUsRead, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Pinpoint/read",  LogTable.LogValue(pinpointWrapperUsRead, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Limelight/read",  LogTable.LogValue(limelightUsRead, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/OTOS/read",  LogTable.LogValue(otosUsRead, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Other/read",  LogTable.LogValue(otherUsRead, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Motor/read us", motorUsRead)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Servo/read us",  servoUsRead)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/CrServo/read us",  crServoUsRead)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/AnalogInput/read us",  analogInputUsRead)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/DigitalChannel/read us",  digitalChannelUsRead)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Imu/read us",  imuUsRead)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/ColorDistance/read us",  colorDistanceUsRead)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/VoltageSensor/read us",  voltageSeUsorUsRead)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Pinpoint/read us",  pinpointWrapperUsRead)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Limelight/read us",  limelightUsRead)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/OTOS/read us",  otosUsRead)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Other/read us",  otherUsRead)
 
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Motor/write",  LogTable.LogValue(motorUsWrite, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Servo/write",  LogTable.LogValue(servoUsWrite, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/CrServo/write",  LogTable.LogValue(crServoUsWrite, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/AnalogInput/write",  LogTable.LogValue(analogInputUsWrite, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/DigitalChannel/write",  LogTable.LogValue(digitalChannelUsWrite, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Imu/write",  LogTable.LogValue(imuUsWrite, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/ColorDistance/write",  LogTable.LogValue(colorDistanceUsWrite, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/VoltageSensor/write",  LogTable.LogValue(voltageSeUsorUsWrite, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Pinpoint/write",  LogTable.LogValue(pinpointWrapperUsWrite, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Limelight/write",  LogTable.LogValue(limelightUsWrite, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/OTOS/write",  LogTable.LogValue(otosUsWrite, "us"))
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Other/write",  LogTable.LogValue(otherUsWrite, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Motor/write us",  motorUsWrite)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Servo/write us",  servoUsWrite)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/CrServo/write us",  crServoUsWrite)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/AnalogInput/write us",  analogInputUsWrite)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/DigitalChannel/write us",  digitalChannelUsWrite)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Imu/write us",  imuUsWrite)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/ColorDistance/write us",  colorDistanceUsWrite)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/VoltageSensor/write us",  voltageSeUsorUsWrite)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Pinpoint/write us",  pinpointWrapperUsWrite)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Limelight/write us",  limelightUsWrite)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/OTOS/write us",  otosUsWrite)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Other/write us",  otherUsWrite)
 
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapMaxDeviceUs/read",  LogTable.LogValue(maxDeviceUsRead, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapMaxDeviceUs/read us",  maxDeviceUsRead)
         if (maxDeviceKeyRead != null) {
             Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapMaxDeviceKey/read",
                 maxDeviceKeyRead
             )
         }
 
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapMaxDeviceUs/write",  LogTable.LogValue(maxDeviceUsWrite, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapMaxDeviceUs/write us",  maxDeviceUsWrite)
         if (maxDeviceKeyWrite != null) {
             Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapMaxDeviceKey/write",
                 maxDeviceKeyWrite
@@ -525,14 +529,15 @@ class FtcLoggingSession {
         val loopEndNs = System.nanoTime()
 
         Logger.recordOutput(
-            "PsiKit/sessionTimes (us)/LogOnceAfterLoopTotal",
-            LogTable.LogValue((loopEndNs - loopStartNs) / 1_000.0, "us")
+            "PsiKit/sessionTimes (us)/LogOnceAfterLoopTotal us",
+            (loopEndNs - loopStartNs) / 1_000.0
         )
     }
 
     private fun clearBulkCaches() {
         val hubs = allHubs ?: return
         for (hub in hubs) {
+            if (FtcLogTuning.prefetchOnlyControlHub && LynxConstants.isEmbeddedSerialNumber(hub.serialNumber).not()) continue
             try {
                 hub.clearBulkCache()
             } catch (_: Throwable) {

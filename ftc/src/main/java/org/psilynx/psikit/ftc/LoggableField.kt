@@ -76,8 +76,8 @@ fun LoggableHardware.loggableIntField(get: (() -> Int)?, set: ((Int) -> Unit)? =
         get,
         set,
         0,
-        { table, value, name -> table.put(name, LogTable.LogValue(value.toLong(), unit)) },
-        { table, name -> table.get(name, 0) }
+        { table, value, name -> table.put("$name $unit", value) },
+        { table, name -> table.get("$name $unit", 0) }
     )
 
 fun LoggableHardware.loggableFloatField(get: (() -> Float)?, set: ((Float) -> Unit)? = null, unit: String = "") =
@@ -86,8 +86,8 @@ fun LoggableHardware.loggableFloatField(get: (() -> Float)?, set: ((Float) -> Un
         get,
         set,
         0f,
-        { table, value, name -> table.put(name, LogTable.LogValue(value, unit)) },
-        { table, name -> table.get(name, 0f) }
+        { table, value, name -> table.put("$name $unit", value) },
+        { table, name -> table.get("$name $unit", 0f) }
     )
 
 fun LoggableHardware.loggableFieldFloatToDouble(get: (() -> Float)?, set: ((Double) -> Unit)? = null, unit: String = "") =
@@ -96,8 +96,8 @@ fun LoggableHardware.loggableFieldFloatToDouble(get: (() -> Float)?, set: ((Doub
         get,
         set?.let { function -> { value -> function(value.toDouble()) } },
         0f,
-        { table, value, name -> table.put(name, LogTable.LogValue(value, unit)) },
-        { table, name -> table.get(name, 0f) }
+        { table, value, name -> table.put("$name $unit", value) },
+        { table, name -> table.get("$name $unit", 0f) }
     )
 
 fun LoggableHardware.loggableDoubleField(
@@ -111,8 +111,8 @@ fun LoggableHardware.loggableDoubleField(
         get,
         set,
         0.0,
-        { table, value, name -> table.put(name, LogTable.LogValue(value, unit)) },
-        { table, name -> table.get(name, 0.0) },
+        { table, value, name -> table.put("$name $unit", value) },
+        { table, name -> table.get("$name $unit", 0.0) },
         rateLimitSetting
     )
 
