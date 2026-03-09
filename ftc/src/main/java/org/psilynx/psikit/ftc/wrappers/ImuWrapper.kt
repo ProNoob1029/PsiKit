@@ -12,6 +12,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles
 import org.psilynx.psikit.core.LogTable
 import org.psilynx.psikit.core.Logger
 import org.psilynx.psikit.ftc.loggableField
+import org.psilynx.psikit.ftc.loggableEnumField
+import org.psilynx.psikit.ftc.loggableStringField
+import org.psilynx.psikit.ftc.loggableIntField
 
 class ImuWrapper(
     private val device: IMU?,
@@ -67,10 +70,10 @@ class ImuWrapper(
             )
         }
     )
-    private val _connectionInfo by loggableField(device?.let { it::getConnectionInfo })
-    private val _manufacturer by loggableField(device?.let { it::getManufacturer }, HardwareDevice.Manufacturer.Other)
-    private val _deviceName by loggableField(device?.let { it::getDeviceName })
-    private val _version by loggableField(device?.let { it::getVersion })
+    private val _connectionInfo by loggableStringField(device?.let { it::getConnectionInfo })
+    private val _manufacturer by loggableEnumField(device?.let { it::getManufacturer }, HardwareDevice.Manufacturer.Other)
+    private val _deviceName by loggableStringField(device?.let { it::getDeviceName })
+    private val _version by loggableIntField(device?.let { it::getVersion })
 
     override fun new(wrapped: IMU?, name: String) = ImuWrapper(wrapped, name)
 

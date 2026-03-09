@@ -17,6 +17,10 @@ import org.psilynx.psikit.core.wpi.math.Pose2d
 import org.psilynx.psikit.core.wpi.math.Pose3d
 import org.psilynx.psikit.core.wpi.math.Rotation2d
 import org.psilynx.psikit.ftc.loggableField
+import org.psilynx.psikit.ftc.loggableEnumField
+import org.psilynx.psikit.ftc.loggableStringField
+import org.psilynx.psikit.ftc.loggableIntField
+import org.psilynx.psikit.ftc.loggableBooleanField
 import java.net.InetAddress
 
 class Limelight3AWrapper(
@@ -32,7 +36,7 @@ class Limelight3AWrapper(
     override val cacheResets = mutableListOf<() -> Unit>()
     override val hardwareName = name
 
-    private val latestResult by loggableField(
+    private val _latestResult by loggableField(
         device?.let { it::getLatestResult },
         resultFromJson("", 0L),
         { table, value: LLResult, name ->
@@ -52,7 +56,7 @@ class Limelight3AWrapper(
         }
     )
 
-    private val status by loggableField(
+    private val _status by loggableField(
         device?.let { it::getStatus },
         LLStatus(),
         { table, value: LLStatus, name ->
@@ -68,13 +72,13 @@ class Limelight3AWrapper(
         }
     )
 
-    private val running by loggableField(device?.let { it::isRunning })
-    private val connected by loggableField(device?.let { it::isConnected })
+    private val running by loggableBooleanField(device?.let { it::isRunning })
+    private val connected by loggableBooleanField(device?.let { it::isConnected })
 
-    private val _connectionInfo by loggableField(device?.let { it::getConnectionInfo })
-    private val _manufacturer by loggableField(device?.let { it::getManufacturer }, HardwareDevice.Manufacturer.Other)
-    private val _deviceName by loggableField(device?.let { it::getDeviceName })
-    private val _version by loggableField(device?.let { it::getVersion })
+    private val _connectionInfo by loggableStringField(device?.let { it::getConnectionInfo })
+    private val _manufacturer by loggableEnumField(device?.let { it::getManufacturer }, HardwareDevice.Manufacturer.Other)
+    private val _deviceName by loggableStringField(device?.let { it::getDeviceName })
+    private val _version by loggableIntField(device?.let { it::getVersion })
 
     override fun new(wrapped: Limelight3A?, name: String) = Limelight3AWrapper(wrapped, name)
 
@@ -218,9 +222,9 @@ class Limelight3AWrapper(
 
     override fun isConnected() = connected
 
-    override fun getLatestResult(): LLResult = latestResult
+    override fun getLatestResult(): LLResult = _latestResult
 
-    override fun getStatus(): LLStatus = status
+    override fun getStatus(): LLStatus = _status
 
     override fun reloadPipeline(): Boolean {
         if (Logger.isReplay()) return false

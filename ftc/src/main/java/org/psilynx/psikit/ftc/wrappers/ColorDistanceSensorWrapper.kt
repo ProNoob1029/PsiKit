@@ -8,6 +8,11 @@ import com.qualcomm.robotcore.hardware.NormalizedColorSensor
 import com.qualcomm.robotcore.hardware.NormalizedRGBA
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit
 import org.psilynx.psikit.ftc.loggableField
+import org.psilynx.psikit.ftc.loggableEnumField
+import org.psilynx.psikit.ftc.loggableStringField
+import org.psilynx.psikit.ftc.loggableDoubleField
+import org.psilynx.psikit.ftc.loggableFloatField
+import org.psilynx.psikit.ftc.loggableIntField
 
 /**
  * Generic wrapper for devices that implement [NormalizedColorSensor] and/or [DistanceSensor].
@@ -24,10 +29,10 @@ class ColorDistanceSensorWrapper(
     override val cacheResets = mutableListOf<() -> Unit>()
     override val hardwareName = name
 
-    private val _connectionInfo by loggableField(device?.let { it::getConnectionInfo })
-    private val _manufacturer by loggableField(device?.let { it::getManufacturer }, HardwareDevice.Manufacturer.Other)
-    private val _deviceName by loggableField(device?.let { it::getDeviceName })
-    private val _version by loggableField(device?.let { it::getVersion })
+    private val _connectionInfo by loggableStringField(device?.let { it::getConnectionInfo })
+    private val _manufacturer by loggableEnumField(device?.let { it::getManufacturer }, HardwareDevice.Manufacturer.Other)
+    private val _deviceName by loggableStringField(device?.let { it::getDeviceName })
+    private val _version by loggableIntField(device?.let { it::getVersion })
 
     private val _normalizedColors by loggableField(
         (device as? NormalizedColorSensor)?.let { it::getNormalizedColors },
@@ -52,14 +57,14 @@ class ColorDistanceSensorWrapper(
     )
 //    private var _gain: Float = 0.0f
     @Suppress("RemoveExplicitTypeArguments")
-    private val _distance: Double by loggableField(
+    private val _distance: Double by loggableDoubleField(
     (device as? DistanceSensor)?.let<DistanceSensor, () -> Double> {
         { it.getDistance(DistanceUnit.METER) }
     },
         unit = "meter"
     )
 
-    private var _gain by loggableField(
+    private var _gain by loggableFloatField(
         get = (device as? NormalizedColorSensor)?.let {
             it::getGain
         },

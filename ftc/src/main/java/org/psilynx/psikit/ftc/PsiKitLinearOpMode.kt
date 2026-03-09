@@ -70,7 +70,7 @@ abstract class PsiKitLinearOpMode: LinearOpMode() {
 
         HardwareMapWrapper.devicesToProcess.forEach {
             val timeToLog = measureTime {
-                Logger.processInputs("HardwareMap/${it.key}", it.value)
+//                Logger.processInputs("HardwareMap/${it.key}", it.value)
             }
             Logger.recordOutput(
                 "PsiKit/logTimes (us)/${it.key}",

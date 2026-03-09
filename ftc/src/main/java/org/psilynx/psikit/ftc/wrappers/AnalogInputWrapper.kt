@@ -2,7 +2,10 @@ package org.psilynx.psikit.ftc.wrappers
 
 import com.qualcomm.robotcore.hardware.AnalogInput
 import com.qualcomm.robotcore.hardware.HardwareDevice
-import org.psilynx.psikit.ftc.loggableField
+import org.psilynx.psikit.ftc.loggableEnumField
+import org.psilynx.psikit.ftc.loggableStringField
+import org.psilynx.psikit.ftc.loggableDoubleField
+import org.psilynx.psikit.ftc.loggableIntField
 
 class AnalogInputWrapper(
     private val device: AnalogInput?,
@@ -12,12 +15,12 @@ class AnalogInputWrapper(
     override var wrieTime = 0.0
     override val cacheResets = mutableListOf<() -> Unit>()
     override val hardwareName = name
-    private val _connectionInfo by loggableField(device?.let { it::getConnectionInfo })
-    private val _manufacturer by loggableField(device?.let { it::getManufacturer }, HardwareDevice.Manufacturer.Other)
-    private val _deviceName by loggableField(device?.let { it::getDeviceName })
-    private val _version by loggableField(device?.let { it::getVersion })
-    private val _maxVoltage by loggableField(device?.let { it::getMaxVoltage }, unit = "volt")
-    private val _voltage by loggableField(device?.let { it::getVoltage }, unit = "volt")
+    private val _connectionInfo by loggableStringField(device?.let { it::getConnectionInfo })
+    private val _manufacturer by loggableEnumField(device?.let { it::getManufacturer }, HardwareDevice.Manufacturer.Other)
+    private val _deviceName by loggableStringField(device?.let { it::getDeviceName })
+    private val _version by loggableIntField(device?.let { it::getVersion })
+    private val _maxVoltage by loggableDoubleField(device?.let { it::getMaxVoltage }, unit = "volt")
+    private val _voltage by loggableDoubleField(device?.let { it::getVoltage }, unit = "volt")
 
     override fun new(wrapped: AnalogInput?, name: String) = AnalogInputWrapper(wrapped, name)
 

@@ -10,7 +10,7 @@ import org.psilynx.psikit.core.LoggableInputs
 import org.psilynx.psikit.core.Logger
 import org.psilynx.psikit.ftc.MockI2cDeviceSyncSimple
 import org.psilynx.psikit.ftc.StructPoseInputs
-import org.psilynx.psikit.ftc.loggableField
+import org.psilynx.psikit.ftc.loggableIntField
 import org.psilynx.psikit.ftc.loggableFieldFloatToDouble
 import org.psilynx.psikit.ftc.measureTimeUs
 
@@ -38,10 +38,10 @@ class PinpointWrapper(
 
     private val poses = StructPoseInputs("Pose2d", "Pose3d")
 
-    private val _deviceId by loggableField(
+    private val _deviceId by loggableIntField(
         device?.let { it::getDeviceID }
     )
-    private val _deviceVersion by loggableField(
+    private val _deviceVersion by loggableIntField(
         device?.let { it::getDeviceVersion }
     )
     private var _yawScalar by loggableFieldFloatToDouble(

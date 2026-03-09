@@ -10,7 +10,11 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
-import org.psilynx.psikit.ftc.loggableField
+import org.psilynx.psikit.ftc.loggableEnumField
+import org.psilynx.psikit.ftc.loggableStringField
+import org.psilynx.psikit.ftc.loggableDoubleField
+import org.psilynx.psikit.ftc.loggableIntField
+import org.psilynx.psikit.ftc.loggableBooleanField
 
 class MotorWrapper(
     private val device: DcMotorImplEx?,
@@ -74,26 +78,26 @@ class MotorWrapper(
     override val cacheResets = mutableListOf({ gotBulkData = false })
     override val hardwareName = name
 
-    private var _zeroPowerBehavior by loggableField(
+    private var _zeroPowerBehavior by loggableEnumField(
         device?.let { it::getZeroPowerBehavior },
         DcMotor.ZeroPowerBehavior.UNKNOWN,
         device?.let { it::setZeroPowerBehavior }
     )
-    private val _powerFloat by loggableField(
+    private val _powerFloat by loggableBooleanField(
         device?.let { it::getPowerFloat }
     )
-    private val _overCurrent by loggableField(
+    private val _overCurrent by loggableBooleanField(
         device?.let { it::isOverCurrent }
     )
-    private val _currentPosition by loggableField(
+    private val _currentPosition by loggableIntField(
         device?.let { it::getCurrentPosition }
     )
-    private var _velocity by loggableField(
+    private var _velocity by loggableDoubleField(
         device?.let<DcMotorImplEx, () -> Double> { it::getVelocity },
         device?.let<DcMotorImplEx, (Double) -> Unit> { it::setVelocity }
     )
     @Suppress("RemoveExplicitTypeArguments")
-    private val _current by loggableField(
+    private val _current by loggableDoubleField(
         device?.let<DcMotorImplEx, () -> Double> {
             { it.getCurrent(CurrentUnit.MILLIAMPS) }
         },
@@ -101,30 +105,30 @@ class MotorWrapper(
     )
 //    private var _targetVelAngular = 0.0
 //    private var _targetVelUnit: AngleUnit? = null
-    private var _power by loggableField(
+    private var _power by loggableDoubleField(
         device?.let { it::getPower },
         device?.let { it::setPower },
         rateLimitSetting = true
     )
-    private var _direction by loggableField(
+    private var _direction by loggableEnumField(
         device?.let { it::getDirection },
         DcMotorSimple.Direction.FORWARD,
         device?.let { it::setDirection }
     )
-    private var _mode by loggableField(
+    private var _mode by loggableEnumField(
         device?.let { it::getMode },
         DcMotor.RunMode.RUN_WITHOUT_ENCODER,
         device?.let { it::setMode }
     )
-    private var _targetPos by loggableField(
+    private var _targetPos by loggableIntField(
         device?.let { it::getTargetPosition },
         device?.let { it::setTargetPosition }
     )
-    private val _busy by loggableField(device?.let { it::isBusy })
-    private val _connectionInfo by loggableField(device?.let { it::getConnectionInfo })
-    private val _manufacturer by loggableField(device?.let { it::getManufacturer }, HardwareDevice.Manufacturer.Other)
-    private val _deviceName by loggableField(device?.let { it::getDeviceName })
-    private val _version by loggableField(device?.let { it::getVersion })
+    private val _busy by loggableBooleanField(device?.let { it::isBusy })
+    private val _connectionInfo by loggableStringField(device?.let { it::getConnectionInfo })
+    private val _manufacturer by loggableEnumField(device?.let { it::getManufacturer }, HardwareDevice.Manufacturer.Other)
+    private val _deviceName by loggableStringField(device?.let { it::getDeviceName })
+    private val _version by loggableIntField(device?.let { it::getVersion })
 
     private var gotBulkData = false
     private fun getBulkData() {

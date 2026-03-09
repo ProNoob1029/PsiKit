@@ -8,6 +8,11 @@ import com.qualcomm.robotcore.hardware.ServoController
 import com.qualcomm.robotcore.hardware.ServoControllerEx
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.ServoConfigurationType
 import org.psilynx.psikit.ftc.loggableField
+import org.psilynx.psikit.ftc.loggableEnumField
+import org.psilynx.psikit.ftc.loggableStringField
+import org.psilynx.psikit.ftc.loggableDoubleField
+import org.psilynx.psikit.ftc.loggableIntField
+import org.psilynx.psikit.ftc.loggableBooleanField
 
 class CrServoWrapper(private val device: CRServoImplEx?, name: String = ""):
     CRServoImplEx(
@@ -40,12 +45,12 @@ class CrServoWrapper(private val device: CRServoImplEx?, name: String = ""):
     override val cacheResets = mutableListOf<() -> Unit>()
     override val hardwareName = name
 
-    private var _direction by loggableField(
+    private var _direction by loggableEnumField(
         device?.let { it::getDirection },
         DcMotorSimple.Direction.FORWARD,
         device?.let { it::setDirection }
     )
-    private var _power by loggableField(
+    private var _power by loggableDoubleField(
         device?.let { it::getPower },
         device?.let { it::setPower },
         rateLimitSetting = true
@@ -69,14 +74,14 @@ class CrServoWrapper(private val device: CRServoImplEx?, name: String = ""):
             )
         }
     )
-    private var _pwmEnabled by loggableField(
+    private var _pwmEnabled by loggableBooleanField(
     device?.let { it::isPwmEnabled },
     device?.let { { value: Boolean -> if (value) it.setPwmEnable() else it.setPwmDisable() } }
     )
-    private val _connectionInfo by loggableField(device?.let { it::getConnectionInfo })
-    private val _manufacturer by loggableField(device?.let { it::getManufacturer }, HardwareDevice.Manufacturer.Other)
-    private val _deviceName by loggableField(device?.let { it::getDeviceName })
-    private val _version by loggableField(device?.let { it::getVersion })
+    private val _connectionInfo by loggableStringField(device?.let { it::getConnectionInfo })
+    private val _manufacturer by loggableEnumField(device?.let { it::getManufacturer }, HardwareDevice.Manufacturer.Other)
+    private val _deviceName by loggableStringField(device?.let { it::getDeviceName })
+    private val _version by loggableIntField(device?.let { it::getVersion })
 
     override fun new(wrapped: CRServoImplEx?, name: String) = CrServoWrapper(wrapped, name)
 

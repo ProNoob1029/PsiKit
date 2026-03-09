@@ -60,7 +60,7 @@ class LoggableCachedField<T>(
     }
 }
 
-fun LoggableHardware.loggableField(get: (() -> Boolean)?, set: ((Boolean) -> Unit)? = null) =
+fun LoggableHardware.loggableBooleanField(get: (() -> Boolean)?, set: ((Boolean) -> Unit)? = null) =
     LoggableCachedField(
         this,
         get,
@@ -70,7 +70,7 @@ fun LoggableHardware.loggableField(get: (() -> Boolean)?, set: ((Boolean) -> Uni
         { table, name -> table.get(name, false) }
     )
 
-fun LoggableHardware.loggableField(get: (() -> Int)?, set: ((Int) -> Unit)? = null, unit: String = "") =
+fun LoggableHardware.loggableIntField(get: (() -> Int)?, set: ((Int) -> Unit)? = null, unit: String = "") =
     LoggableCachedField(
         this,
         get,
@@ -80,7 +80,7 @@ fun LoggableHardware.loggableField(get: (() -> Int)?, set: ((Int) -> Unit)? = nu
         { table, name -> table.get(name, 0) }
     )
 
-fun LoggableHardware.loggableField(get: (() -> Float)?, set: ((Float) -> Unit)? = null, unit: String = "") =
+fun LoggableHardware.loggableFloatField(get: (() -> Float)?, set: ((Float) -> Unit)? = null, unit: String = "") =
     LoggableCachedField(
         this,
         get,
@@ -100,7 +100,7 @@ fun LoggableHardware.loggableFieldFloatToDouble(get: (() -> Float)?, set: ((Doub
         { table, name -> table.get(name, 0f) }
     )
 
-fun LoggableHardware.loggableField(
+fun LoggableHardware.loggableDoubleField(
     get: (() -> Double)?,
     set: ((Double) -> Unit)? = null,
     unit: String = "",
@@ -116,7 +116,7 @@ fun LoggableHardware.loggableField(
         rateLimitSetting
     )
 
-fun LoggableHardware.loggableField(get: (() -> String)?, set: ((String) -> Unit)? = null) =
+fun LoggableHardware.loggableStringField(get: (() -> String)?, set: ((String) -> Unit)? = null) =
     LoggableCachedField(
         this,
         get,
@@ -125,7 +125,7 @@ fun LoggableHardware.loggableField(get: (() -> String)?, set: ((String) -> Unit)
         { table, value, name -> table.put(name, value) },
         { table, name -> table.get(name, "") }
     )
-
+/*
 fun LoggableHardware.loggableField(get: (() -> BooleanArray)?, set: ((BooleanArray) -> Unit)? = null) =
     LoggableCachedField(
         this,
@@ -164,7 +164,7 @@ fun LoggableHardware.loggableField(get: (() -> DoubleArray)?, set: ((DoubleArray
         doubleArrayOf(),
         { table, value, name -> table.put(name, value) },
         { table, name -> table.get(name, doubleArrayOf()) }
-    )
+    )*/
 
 /*fun <T: LoggableInputs> LoggableHardware.loggableField(get: (() -> T)?, default: T, set: (T) -> Unit = {}) =
     LoggableCachedField(
@@ -176,7 +176,7 @@ fun LoggableHardware.loggableField(get: (() -> DoubleArray)?, set: ((DoubleArray
         { table, name -> table.get(name, default) }
     )*/
 
-fun <T: Enum<T>> LoggableHardware.loggableField(get: (() -> T)?, default: T, set: ((T) -> Unit)? = null) =
+fun <T: Enum<T>> LoggableHardware.loggableEnumField(get: (() -> T)?, default: T, set: ((T) -> Unit)? = null) =
     LoggableCachedField(
         this,
         get,
@@ -201,7 +201,7 @@ fun <T> LoggableHardware.loggableField(
         fromLog
     )
 
-fun LoggableHardware.loggableField(
+fun LoggableHardware.loggablePwmRangeField(
     get: (() -> PwmControl.PwmRange)?,
     set: ((PwmControl.PwmRange) -> Unit)?
 ) = LoggableCachedField(

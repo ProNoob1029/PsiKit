@@ -3,7 +3,10 @@ package org.psilynx.psikit.ftc.wrappers
 import com.qualcomm.robotcore.hardware.DigitalChannel
 import com.qualcomm.robotcore.hardware.DigitalChannelController
 import com.qualcomm.robotcore.hardware.HardwareDevice
-import org.psilynx.psikit.ftc.loggableField
+import org.psilynx.psikit.ftc.loggableEnumField
+import org.psilynx.psikit.ftc.loggableStringField
+import org.psilynx.psikit.ftc.loggableIntField
+import org.psilynx.psikit.ftc.loggableBooleanField
 
 class DigitalChannelWrapper(
     private val device: DigitalChannel?,
@@ -14,19 +17,19 @@ class DigitalChannelWrapper(
     override val cacheResets = mutableListOf<() -> Unit>()
     override val hardwareName = name
 
-    private var _mode by loggableField(
+    private var _mode by loggableEnumField(
         device?.let { it::getMode },
         DigitalChannel.Mode.INPUT,
         device?.let { { value -> it.mode = value } }
     )
-    private var _state by loggableField(
+    private var _state by loggableBooleanField(
         device?.let { it::getState },
         device?.let { it::setState }
     )
-    private val _connectionInfo by loggableField(device?.let { it::getConnectionInfo })
-    private val _manufacturer by loggableField(device?.let { it::getManufacturer }, HardwareDevice.Manufacturer.Other)
-    private val _deviceName by loggableField(device?.let { it::getDeviceName })
-    private val _version by loggableField(device?.let { it::getVersion })
+    private val _connectionInfo by loggableStringField(device?.let { it::getConnectionInfo })
+    private val _manufacturer by loggableEnumField(device?.let { it::getManufacturer }, HardwareDevice.Manufacturer.Other)
+    private val _deviceName by loggableStringField(device?.let { it::getDeviceName })
+    private val _version by loggableIntField(device?.let { it::getVersion })
 
     override fun new(wrapped: DigitalChannel?, name: String) = DigitalChannelWrapper(wrapped, name)
 

@@ -7,7 +7,10 @@ import com.qualcomm.robotcore.hardware.ServoController
 import com.qualcomm.robotcore.hardware.ServoControllerEx
 import com.qualcomm.robotcore.hardware.ServoImplEx
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.ServoConfigurationType
-import org.psilynx.psikit.ftc.loggableField
+import org.psilynx.psikit.ftc.loggablePwmRangeField
+import org.psilynx.psikit.ftc.loggableEnumField
+import org.psilynx.psikit.ftc.loggableDoubleField
+import org.psilynx.psikit.ftc.loggableBooleanField
 
 class ServoWrapper(device: ServoImplEx?, name: String = ""):
     ServoImplEx(
@@ -37,21 +40,21 @@ class ServoWrapper(device: ServoImplEx?, name: String = ""):
     override var wrieTime = 0.0
     override val cacheResets = mutableListOf<() -> Unit>()
     override val hardwareName = name
-    private var _direction by loggableField(
+    private var _direction by loggableEnumField(
         device?.let { it::getDirection },
         Servo.Direction.FORWARD,
         device?.let { it::setDirection }
     )
-    private var _position by loggableField(
+    private var _position by loggableDoubleField(
         device?.let { it::getPosition },
         device?.let { it::setPosition },
         rateLimitSetting = true
     )
-    private var _pwmRange by loggableField(
+    private var _pwmRange by loggablePwmRangeField(
         device?.let { it::getPwmRange },
         device?.let { it::setPwmRange }
     )
-    private var _pwmEnabled by loggableField(
+    private var _pwmEnabled by loggableBooleanField(
         device?.let { it::isPwmEnabled },
         device?.let { servo -> { value -> if (value) servo.setPwmEnable() else servo.setPwmDisable() } }
     )
