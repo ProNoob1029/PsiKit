@@ -54,6 +54,7 @@ public abstract class LoggedOpMode extends OpMode {
 
     private void afterUser() {
         double afterUserStart = Logger.getRealTimestamp();
+        psiKitSession.logOnceAfterLoop();
         Logger.periodicAfterUser(
                 afterUserStart - userStart,
                 setupEnd - setupStart,

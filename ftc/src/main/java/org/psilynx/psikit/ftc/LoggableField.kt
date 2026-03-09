@@ -2,6 +2,7 @@
 
 package org.psilynx.psikit.ftc
 
+import com.qualcomm.robotcore.hardware.PwmControl
 import org.psilynx.psikit.core.LogTable
 import org.psilynx.psikit.core.LoggableInputs
 import org.psilynx.psikit.core.Logger
@@ -84,6 +85,16 @@ fun LoggableHardware.loggableField(get: (() -> Float)?, set: ((Float) -> Unit)? 
         this,
         get,
         set,
+        0f,
+        { table, value, name -> table.put(name, LogTable.LogValue(value, unit)) },
+        { table, name -> table.get(name, 0f) }
+    )
+
+fun LoggableHardware.loggableFieldFloatToDouble(get: (() -> Float)?, set: ((Double) -> Unit)? = null, unit: String = "") =
+    LoggableCachedField(
+        this,
+        get,
+        set?.let { function -> { value -> function(value.toDouble()) } },
         0f,
         { table, value, name -> table.put(name, LogTable.LogValue(value, unit)) },
         { table, name -> table.get(name, 0f) }
@@ -189,3 +200,30 @@ fun <T> LoggableHardware.loggableField(
         toLog,
         fromLog
     )
+
+fun LoggableHardware.loggableField(
+    get: (() -> PwmControl.PwmRange)?,
+    set: ((PwmControl.PwmRange) -> Unit)?
+) = LoggableCachedField(
+    this,
+    get,
+    set,
+    PwmControl.PwmRange(
+        PwmControl.PwmRange.usPulseLowerDefault,
+        PwmControl.PwmRange.usPulseUpperDefault
+    ),
+    {table, value, name ->
+        val subTable = table.getSubtable(name)
+        subTable.put("usPulseLower", value.usPulseLower)
+        subTable.put("usPulseUpper", value.usPulseUpper)
+        subTable.put("usFrame", value.usFrame)
+    },
+    {table, name ->
+        val subTable = table.getSubtable(name)
+        PwmControl.PwmRange(
+            subTable.get("usPulseLower", PwmControl.PwmRange.usPulseLowerDefault),
+            subTable.get("usPulseUpper", PwmControl.PwmRange.usPulseUpperDefault),
+            subTable.get("usFrame", PwmControl.PwmRange.usFrameDefault)
+        )
+    }
+)

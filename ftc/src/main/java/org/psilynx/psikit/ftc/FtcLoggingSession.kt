@@ -5,16 +5,17 @@ import com.qualcomm.hardware.lynx.LynxModule.BulkCachingMode.MANUAL
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
 import com.qualcomm.robotcore.eventloop.opmode.OpMode
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp
+import com.qualcomm.robotcore.hardware.configuration.LynxConstants
 import org.psilynx.psikit.core.LogReplaySource
+import org.psilynx.psikit.core.LogTable
 import org.psilynx.psikit.core.Logger
-import org.psilynx.psikit.core.rlog.RLOGServer
 import org.psilynx.psikit.core.rlog.RLOGReplay
+import org.psilynx.psikit.core.rlog.RLOGServer
 import org.psilynx.psikit.core.rlog.RLOGWriter
 import org.psilynx.psikit.ftc.wrappers.AnalogInputWrapper
 import org.psilynx.psikit.ftc.wrappers.ColorDistanceSensorWrapper
 import org.psilynx.psikit.ftc.wrappers.CrServoWrapper
 import org.psilynx.psikit.ftc.wrappers.DigitalChannelWrapper
-import org.psilynx.psikit.ftc.wrappers.HardwareInput
 import org.psilynx.psikit.ftc.wrappers.ImuWrapper
 import org.psilynx.psikit.ftc.wrappers.Limelight3AWrapper
 import org.psilynx.psikit.ftc.wrappers.MotorWrapper
@@ -22,9 +23,9 @@ import org.psilynx.psikit.ftc.wrappers.PinpointWrapper
 import org.psilynx.psikit.ftc.wrappers.ServoWrapper
 import org.psilynx.psikit.ftc.wrappers.SparkFunOTOSWrapper
 import org.psilynx.psikit.ftc.wrappers.VoltageSensorWrapper
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.io.File
 
 /**
  * Composition-based PsiKit logging helper for FTC [OpMode]s.
@@ -44,21 +45,7 @@ class FtcLoggingSession {
         private const val REPLAY_OUTPUT_DIR_ENV = "PSIKIT_REPLAY_OUTPUT_DIR"
         private const val REPLAY_MOCK_HARDWAREMAP_ENV = "PSIKIT_REPLAY_MOCK_HARDWAREMAP"
     }
-
-    /**
-     * If true, logs Pinpoint odometry (when present) each loop via [PinpointOdometryLogger].
-     *
-     * Behavior when no Pinpoint is configured:
-     * - Performs a one-time scan of the [com.qualcomm.robotcore.hardware.HardwareMap]
-     * - Then becomes a no-op (no outputs are produced)
-     *
-     * Set to false to opt out even if a Pinpoint is present.
-     */
-    @JvmField
-    var enablePinpointOdometryLogging: Boolean = true
-
     private val driverStationLogger = DriverStationLogger()
-    private val pinpointOdometryLogger = PinpointOdometryLogger()
 
     private var wrappedHardwareMap: com.qualcomm.robotcore.hardware.HardwareMap? = null
     private var allHubs: List<LynxModule>? = null
@@ -134,7 +121,7 @@ class FtcLoggingSession {
                 try {
                     opMode.hardwareMap = HardwareMapWrapper(null)
                     wrappedHardwareMap = opMode.hardwareMap
-                } catch (t: Throwable) {
+                } catch (_: Throwable) {
                     // Keep replay usable even if the mock hardware map can't be created on this JVM.
                     wrappedHardwareMap = null
                 }
@@ -283,7 +270,7 @@ class FtcLoggingSession {
             if (hubs != null) {
                 var prefetchTotalNs = 0L
                 for (hub in hubs) {
-                    if (FtcLogTuning.prefetchOnlyControlHub && hub.isParent.not()) continue
+                    if (FtcLogTuning.prefetchOnlyControlHub && LynxConstants.isEmbeddedSerialNumber(hub.serialNumber).not()) continue
                     val startNs = System.nanoTime()
                     try {
                         hub.bulkData
@@ -347,101 +334,199 @@ class FtcLoggingSession {
             (dsEndNs - dsStartNs) / 1_000.0
         )
 
-        if (enablePinpointOdometryLogging && !FtcLogTuning.bulkOnlyLogging) {
-            HardwareMapWrapper.devicesToProcess.toList()
-                .filter { it.second is PinpointWrapper }.map { it.second as HardwareInput<*> }
-                .forEach { it.onceBeforeLoop() }
-            // Pinpoint odometry (AdvantageScope Pose2d/Pose3d structs under /Odometry).
-            val pinpointStartNs = System.nanoTime()
-            pinpointOdometryLogger.logAll(opMode.hardwareMap)
-            val pinpointEndNs = System.nanoTime()
-            Logger.recordOutput(
-                "PsiKit/sessionTimes (us)/PinpointOdometry",
-                (pinpointEndNs - pinpointStartNs) / 1_000.0
-            )
-        }
+//        if (enablePinpointOdometryLogging && !FtcLogTuning.bulkOnlyLogging) {
+//            HardwareMapWrapper.devicesToProcess.toList()
+//                .filter { it.second is PinpointWrapper }.map { it.second as HardwareInput<*> }
+//                .forEach { it.onceBeforeLoop() }
+//            // Pinpoint odometry (AdvantageScope Pose2d/Pose3d structs under /Odometry).
+//            val pinpointStartNs = System.nanoTime()
+//            pinpointOdometryLogger.logAll(opMode.hardwareMap)
+//            val pinpointEndNs = System.nanoTime()
+//            Logger.recordOutput(
+//                "PsiKit/sessionTimes (us)/PinpointOdometry",
+//                (pinpointEndNs - pinpointStartNs) / 1_000.0
+//            )
+//        }
+
+        val loopEndNs = System.nanoTime()
+
+        Logger.recordOutput(
+            "PsiKit/sessionTimes (us)/LogOnceBeforeLoopTotal",
+            LogTable.LogValue((loopEndNs - loopStartNs) / 1_000.0, "us")
+        )
+    }
+
+
+    fun logOnceAfterLoop() {
+        val loopStartNs = System.nanoTime()
 
         // Log all accessed hardware devices.
-        var hardwareTotalUs = 0.0
+        var hardwareTotalUsRead = 0.0
 
-        var motorUs = 0L
-        var servoUs = 0L
-        var crServoUs = 0L
-        var analogInputUs = 0L
-        var digitalChannelUs = 0L
-        var imuUs = 0L
-        var colorDistanceUs = 0L
-        var voltageSeUsorUs = 0L
-        var pinpointWrapperUs = 0L
-        var limelightUs = 0L
-        var otosUs = 0L
-        var otherUs = 0L
+        var motorUsRead = 0.0
+        var servoUsRead = 0.0
+        var crServoUsRead = 0.0
+        var analogInputUsRead = 0.0
+        var digitalChannelUsRead = 0.0
+        var imuUsRead = 0.0
+        var colorDistanceUsRead = 0.0
+        var voltageSeUsorUsRead = 0.0
+        var pinpointWrapperUsRead = 0.0
+        var limelightUsRead = 0.0
+        var otosUsRead = 0.0
+        var otherUsRead = 0.0
 
-        var maxDeviceUs = 0L
-        var maxDeviceKey: String? = null
+        var maxDeviceUsRead = 0.0
+        var maxDeviceKeyRead: String? = null
+
+        var hardwareTotalUsWrite = 0.0
+
+        var motorUsWrite = 0.0
+        var servoUsWrite = 0.0
+        var crServoUsWrite = 0.0
+        var analogInputUsWrite = 0.0
+        var digitalChannelUsWrite = 0.0
+        var imuUsWrite = 0.0
+        var colorDistanceUsWrite = 0.0
+        var voltageSeUsorUsWrite = 0.0
+        var pinpointWrapperUsWrite = 0.0
+        var limelightUsWrite = 0.0
+        var otosUsWrite = 0.0
+        var otherUsWrite = 0.0
+
+        var maxDeviceUsWrite = 0.0
+        var maxDeviceKeyWrite: String? = null
 
         for ((key, value) in HardwareMapWrapper.devicesToProcess) {
-            /*val startNs = System.nanoTime()
-            Logger.processInputs("HardwareMap/$key", value)
-            val endNs = System.nanoTime()
-            val dtNs = endNs - startNs
-            hardwareTotalNs += dtNs
-            Logger.recordOutput("PsiKit/logTimes (us)/$key", dtNs / 1_000.0)*/
+            val writeUs = value.wrieTime
+            val readUs = value.readTime
+//            val totalUs = readUs + writeUs
+            Logger.recordOutput("PsiKit/logtimes (us)/$key/read", LogTable.LogValue(readUs, "us"))
+            Logger.recordOutput("PsiKit/logtimes (us)/$key/write", LogTable.LogValue(writeUs, "us"))
+//            Logger.recordOutput("PsiKit/logtimes (us)/$key/write", LogTable.LogValue(totalUs, "us"))
 
-            val dtUs = 0.0
 
-            hardwareTotalUs += value
+            hardwareTotalUsRead += readUs
+            hardwareTotalUsWrite += writeUs
 //            Logger.recordOutput("PsiKit/logTimes (us)/$key", dtUs / 1_000.0)
 
             when (value) {
-                is MotorWrapper -> motorUs += dtUs
-                is ServoWrapper -> servoUs += dtUs
-                is CrServoWrapper -> crServoUs += dtUs
-                is AnalogInputWrapper -> analogInputUs += dtUs
-                is DigitalChannelWrapper -> digitalChannelUs += dtUs
-                is ImuWrapper -> imuUs += dtUs
-                is ColorDistanceSensorWrapper -> colorDistanceUs += dtUs
-                is VoltageSensorWrapper -> voltageSeUsorUs += dtUs
-                is PinpointWrapper -> pinpointWrapperUs += dtUs
-                is Limelight3AWrapper -> limelightUs += dtUs
-                is SparkFunOTOSWrapper -> otosUs += dtUs
-                else -> otherUs += dtUs
+                is MotorWrapper -> {
+                    motorUsRead += readUs
+                    motorUsWrite += writeUs
+                }
+                is ServoWrapper -> {
+                    servoUsRead += readUs
+                    servoUsWrite += writeUs
+                }
+                is CrServoWrapper -> {
+                    crServoUsRead += readUs
+                    crServoUsWrite += writeUs
+                }
+                is AnalogInputWrapper -> {
+                    analogInputUsRead += readUs
+                    analogInputUsWrite += writeUs
+                }
+                is DigitalChannelWrapper -> {
+                    digitalChannelUsRead += readUs
+                    digitalChannelUsWrite += writeUs
+                }
+                is ImuWrapper -> {
+                    imuUsRead += readUs
+                    imuUsWrite += writeUs
+                }
+                is ColorDistanceSensorWrapper -> {
+                    colorDistanceUsRead += readUs
+                    colorDistanceUsWrite += writeUs
+                }
+                is VoltageSensorWrapper -> {
+                    voltageSeUsorUsRead += readUs
+                    voltageSeUsorUsWrite += writeUs
+                }
+                is PinpointWrapper -> {
+                    pinpointWrapperUsRead += readUs
+                    pinpointWrapperUsWrite += writeUs
+                }
+                is Limelight3AWrapper -> {
+                    limelightUsRead += readUs
+                    limelightUsWrite += writeUs
+                }
+                is SparkFunOTOSWrapper -> {
+                    otosUsRead += readUs
+                    otosUsWrite += writeUs
+                }
+                else -> {
+                    otherUsRead += readUs
+                    otherUsWrite += writeUs
+                }
             }
 
-            if (dtUs > maxDeviceUs) {
-                maxDeviceUs = dtUs
-                maxDeviceKey = key
+            if (readUs > maxDeviceUsRead) {
+                maxDeviceUsRead = readUs
+                maxDeviceKeyRead = key
+            }
+
+            if (writeUs > maxDeviceUsWrite) {
+                maxDeviceUsWrite = writeUs
+                maxDeviceKeyWrite = key
             }
         }
-
-        val loopEndNs = System.nanoTime()
         Logger.recordOutput(
-            "PsiKit/sessionTimes (us)/HardwareMapTotal",
-            hardwareTotalUs / 1_000.0
+            "PsiKit/sessionTimes (us)/HardwareMapTotal/read",
+            LogTable.LogValue(hardwareTotalUsRead, "us")
+        )
+
+        Logger.recordOutput(
+            "PsiKit/sessionTimes (us)/HardwareMapTotal/write",
+            LogTable.LogValue(hardwareTotalUsWrite, "us")
         )
 
         // Higher-level breakdown to identify where HardwareMapTotal spikes come from.
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Motor", motorUs / 1_000.0)
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Servo", servoUs / 1_000.0)
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/CrServo", crServoUs / 1_000.0)
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/AnalogInput", analogInputUs / 1_000.0)
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/DigitalChannel", digitalChannelUs / 1_000.0)
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Imu", imuUs / 1_000.0)
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/ColorDistance", colorDistanceUs / 1_000.0)
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/VoltageSeUsor", voltageSeUsorUs / 1_000.0)
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Pinpoint", pinpointWrapperUs / 1_000.0)
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Limelight", limelightUs / 1_000.0)
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/OTOS", otosUs / 1_000.0)
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Other", otherUs / 1_000.0)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Motor/read", LogTable.LogValue(motorUsRead, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Servo/read",  LogTable.LogValue(servoUsRead, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/CrServo/read",  LogTable.LogValue(crServoUsRead, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/AnalogInput/read",  LogTable.LogValue(analogInputUsRead, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/DigitalChannel/read",  LogTable.LogValue(digitalChannelUsRead, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Imu/read",  LogTable.LogValue(imuUsRead, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/ColorDistance/read",  LogTable.LogValue(colorDistanceUsRead, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/VoltageSensor/read",  LogTable.LogValue(voltageSeUsorUsRead, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Pinpoint/read",  LogTable.LogValue(pinpointWrapperUsRead, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Limelight/read",  LogTable.LogValue(limelightUsRead, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/OTOS/read",  LogTable.LogValue(otosUsRead, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Other/read",  LogTable.LogValue(otherUsRead, "us"))
 
-        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapMaxDeviceUs", maxDeviceUs / 1_000.0)
-        if (maxDeviceKey != null) {
-            Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapMaxDeviceKey", maxDeviceKey!!)
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Motor/write",  LogTable.LogValue(motorUsWrite, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Servo/write",  LogTable.LogValue(servoUsWrite, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/CrServo/write",  LogTable.LogValue(crServoUsWrite, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/AnalogInput/write",  LogTable.LogValue(analogInputUsWrite, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/DigitalChannel/write",  LogTable.LogValue(digitalChannelUsWrite, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Imu/write",  LogTable.LogValue(imuUsWrite, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/ColorDistance/write",  LogTable.LogValue(colorDistanceUsWrite, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/VoltageSensor/write",  LogTable.LogValue(voltageSeUsorUsWrite, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Pinpoint/write",  LogTable.LogValue(pinpointWrapperUsWrite, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Limelight/write",  LogTable.LogValue(limelightUsWrite, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/OTOS/write",  LogTable.LogValue(otosUsWrite, "us"))
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapByType/Other/write",  LogTable.LogValue(otherUsWrite, "us"))
+
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapMaxDeviceUs/read",  LogTable.LogValue(maxDeviceUsRead, "us"))
+        if (maxDeviceKeyRead != null) {
+            Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapMaxDeviceKey/read",
+                maxDeviceKeyRead
+            )
         }
 
+        Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapMaxDeviceUs/write",  LogTable.LogValue(maxDeviceUsWrite, "us"))
+        if (maxDeviceKeyWrite != null) {
+            Logger.recordOutput("PsiKit/sessionTimes (us)/HardwareMapMaxDeviceKey/write",
+                maxDeviceKeyWrite
+            )
+        }
+
+        val loopEndNs = System.nanoTime()
+
         Logger.recordOutput(
-            "PsiKit/sessionTimes (us)/LogOncePerLoopTotal",
-            (loopEndNs - loopStartNs) / 1_000.0
+            "PsiKit/sessionTimes (us)/LogOnceAfterLoopTotal",
+            LogTable.LogValue((loopEndNs - loopStartNs) / 1_000.0, "us")
         )
     }
 

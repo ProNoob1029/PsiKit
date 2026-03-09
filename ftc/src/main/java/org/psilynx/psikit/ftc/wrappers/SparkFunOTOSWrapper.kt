@@ -11,10 +11,15 @@ import org.psilynx.psikit.ftc.FtcLogTuning
 import org.psilynx.psikit.ftc.MockI2cDeviceSyncSimple
 
 class SparkFunOTOSWrapper(
-    private val device: SparkFunOTOS?
+    private val device: SparkFunOTOS?,
+    name: String = ""
 ) : SparkFunOTOS(
     I2cDeviceSynchImplOnSimple(MockI2cDeviceSyncSimple(), true)
 ), HardwareInput<SparkFunOTOS> {
+    override var readTime = 0.0
+    override var wrieTime = 0.0
+    override val cacheResets = mutableListOf<() -> Unit>()
+    override val hardwareName = name
 
     private var _deviceName    = "MockSparkFunOTOS"
     private var _version       = 1
@@ -40,7 +45,7 @@ class SparkFunOTOSWrapper(
     private var _statusByte: Byte = 0
     private var _signalProcessConfigByte: Byte = 0
 
-    override fun toLog(table: LogTable) {
+    fun toLog(table: LogTable) {
         if (FtcLogTuning.bulkOnlyLogging) {
             return
         }
@@ -91,7 +96,7 @@ class SparkFunOTOSWrapper(
         table.put("signalProcessConfig", _signalProcessConfigByte.toInt())
     }
 
-    override fun fromLog(table: LogTable) {
+    fun fromLog(table: LogTable) {
         _deviceName     = table.get("deviceName", "MockSparkFunOTOS")
         _version        = table.get("version", 1)
         _connectionInfo = table.get("connectionInfo", "")
@@ -255,5 +260,5 @@ class SparkFunOTOSWrapper(
     override fun close() { device?.close() }
     override fun resetDeviceConfigurationForOpMode() { device?.resetDeviceConfigurationForOpMode() }
 
-    override fun new(wrapped: SparkFunOTOS?) = SparkFunOTOSWrapper(wrapped)
+    override fun new(wrapped: SparkFunOTOS?, name: String) = SparkFunOTOSWrapper(wrapped, name)
 }

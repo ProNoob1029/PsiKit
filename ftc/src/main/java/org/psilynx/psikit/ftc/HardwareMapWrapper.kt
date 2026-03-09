@@ -264,15 +264,15 @@ class HardwareMapWrapper(
             is MotorWrapper -> {
                 // DcMotorEx is usually DcMotorImplEx in the FTC SDK, but tests/fakes may not be.
                 // Avoid ClassCastException by only wrapping when the implementation matches.
-                if (device == null || device is DcMotorImplEx) wrapperTemplate.new(device as? DcMotorImplEx)
+                if (device == null || device is DcMotorImplEx) wrapperTemplate.new(device as? DcMotorImplEx, "HardwareMap/$name")
                 else null
             }
             is ServoWrapper -> {
-                if (device == null || device is ServoImplEx) wrapperTemplate.new(device as? ServoImplEx)
+                if (device == null || device is ServoImplEx) wrapperTemplate.new(device as? ServoImplEx, "HardwareMap/$name")
                 else null
             }
             is CrServoWrapper -> {
-                if (device == null || device is CRServoImplEx) wrapperTemplate.new(device as? CRServoImplEx)
+                if (device == null || device is CRServoImplEx) wrapperTemplate.new(device as? CRServoImplEx, "HardwareMap/$name")
                 else null
             }
             else -> wrapperTemplate?.new(device, "HardwareMap/$name")
@@ -282,12 +282,12 @@ class HardwareMapWrapper(
         Logger.logInfo("hardwaremap call on $classOrInterface, got " +
                 "wrapper ${wrapper?.javaClass?.canonicalName}")
         if (wrapper != null) {
-            if (wrapper is MotorWrapper) {
-                wrapper.psikitName = name
-            }
-            if (wrapper is PinpointWrapper) {
-                wrapper.psikitName = name
-            }
+//            if (wrapper is MotorWrapper) {
+//                wrapper.psikitName = name
+//            }
+//            if (wrapper is PinpointWrapper) {
+//                wrapper.psikitName = name
+//            }
             devicesToProcess[name] = wrapper
 
             // Important: if the user asked for a concrete class (not an interface), we cannot

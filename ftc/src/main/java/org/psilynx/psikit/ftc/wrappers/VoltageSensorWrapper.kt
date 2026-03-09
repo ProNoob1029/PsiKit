@@ -2,81 +2,36 @@ package org.psilynx.psikit.ftc.wrappers
 
 import com.qualcomm.robotcore.hardware.HardwareDevice
 import com.qualcomm.robotcore.hardware.VoltageSensor
-import org.psilynx.psikit.ftc.FtcLogTuning
-import org.psilynx.psikit.core.LogTable
+import org.psilynx.psikit.ftc.loggableField
 
 class VoltageSensorWrapper(
-    private val device: VoltageSensor?
+    private val device: VoltageSensor?,
+    name: String = ""
 ) : VoltageSensor, HardwareInput<VoltageSensor> {
+    override var readTime = 0.0
+    override var wrieTime = 0.0
+    override val cacheResets = mutableListOf<() -> Unit>()
+    override val hardwareName = name
 
-    private var _voltage = 0.0
-    private var _sampledThisLoop = false
-    private var _deviceName = "MockVoltageSensor"
-    private var _version = 1
-    private var _connectionInfo = ""
-    private var _manufacturer = HardwareDevice.Manufacturer.Other
+    private var _voltage by loggableField(
+        device?.let { it::getVoltage },
+        unit = "volt"
+    )
+    private val _connectionInfo by loggableField(device?.let { it::getConnectionInfo })
+    private val _manufacturer by loggableField(device?.let { it::getManufacturer }, HardwareDevice.Manufacturer.Other)
+    private val _deviceName by loggableField(device?.let { it::getDeviceName })
+    private val _version by loggableField(device?.let { it::getVersion })
 
-    override fun new(wrapped: VoltageSensor?) = VoltageSensorWrapper(wrapped)
-
-    override fun toLog(table: LogTable) {
-        val d = device
-
-        if (d != null) {
-            _deviceName = d.deviceName
-            _version = d.version
-            _connectionInfo = d.connectionInfo
-            _manufacturer = d.manufacturer
-        }
-
-        if (FtcLogTuning.bulkOnlyLogging) {
-            if (_sampledThisLoop) {
-                table.put("voltage", _voltage)
-            }
-            table.put("voltage/sampled", _sampledThisLoop)
-            _sampledThisLoop = false
-            return
-        }
-
-        if (d != null) {
-            _voltage = d.voltage
-            _sampledThisLoop = true
-        }
-
-        if (_sampledThisLoop) {
-            table.put("voltage", _voltage)
-        }
-        table.put("voltage/sampled", _sampledThisLoop)
-        table.put("deviceName", deviceName)
-        table.put("version", version)
-        table.put("connectionInfo", connectionInfo)
-        table.put("manufacturer", manufacturer)
-        _sampledThisLoop = false
-
-
-    }
-
-    override fun fromLog(table: LogTable) {
-        _voltage = table.get("voltage", 0.0)
-        _deviceName = table.get("deviceName", "MockVoltageSensor")
-        _version = table.get("version", 1)
-        _connectionInfo = table.get("connectionInfo", "")
-        _manufacturer = table.get("manufacturer", HardwareDevice.Manufacturer.Other)
-        _sampledThisLoop = table.get("voltage/sampled", false)
-    }
+    override fun new(wrapped: VoltageSensor?, name: String) = VoltageSensorWrapper(wrapped, name)
 
     override fun getVoltage(): Double {
-        val d = device
-        if (d != null) {
-            _voltage = d.voltage
-            _sampledThisLoop = true
-        }
         return _voltage
     }
 
     override fun getDeviceName() = _deviceName
     override fun getVersion() = _version
     override fun getConnectionInfo() = _connectionInfo
-    override fun getManufacturer() = _manufacturer
+    override fun getManufacturer(): HardwareDevice.Manufacturer = _manufacturer
 
     override fun close() { device?.close() }
     override fun resetDeviceConfigurationForOpMode() {

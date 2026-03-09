@@ -434,7 +434,13 @@ public class Logger {
   }
 
   public static void recordOutput(String key, MeasuredUnit unit) {
-    recordOutput(key + " " + unit.getUnit(), unit.getValue());
+    recordOutput(key, new LogTable.LogValue(unit.getValue(), unit.getUnit()));
+  }
+
+  public static void recordOutput(String key, LogTable.LogValue value) {
+    if (running) {
+      outputTable.put(key, value);
+    }
   }
 
   /**
