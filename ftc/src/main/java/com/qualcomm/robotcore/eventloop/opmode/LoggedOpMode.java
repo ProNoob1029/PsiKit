@@ -36,11 +36,12 @@ public abstract class LoggedOpMode extends OpMode {
     protected FtcLoggingSession psiKitSession = new FtcLoggingSession();
 
     private boolean sessionStarted = false;
-    private Double setupStart = 0.0;
-    private Double setupEnd = 0.0;
-    private Double idleStart = 0.0;
-    private Double idleEnd = 0.0;
-    private Double userStart = 0.0;
+    private double setupStart = 0.0;
+    private double setupEnd = 0.0;
+    private double idleStart = 0.0;
+    private double idleEnd = 0.0;
+    private double userStart = 0.0;
+    private double bulkPrefetch = 0.0;
 
     private void beforeUser() {
         setupStart = Logger.getRealTimestamp();
@@ -49,8 +50,11 @@ public abstract class LoggedOpMode extends OpMode {
         psiKitSession.logOnceBeforeLoop(this);
 
         setupEnd = Logger.getRealTimestamp();
-        userStart = setupEnd;
+
         psiKitSession.clearAndPrefetchBulk();
+
+        bulkPrefetch = Logger.getRealTimestamp() - setupEnd;
+        userStart = setupEnd;
     }
 
     private void afterUser() {
@@ -58,7 +62,7 @@ public abstract class LoggedOpMode extends OpMode {
         psiKitSession.logOnceAfterLoop();
         double afterUserEnd = Logger.getRealTimestamp();
         Logger.periodicAfterUser(
-                afterUserStart - userStart,
+                afterUserStart - userStart + bulkPrefetch,
                 setupEnd - setupStart,
                 idleEnd - idleStart,
                 afterUserEnd - afterUserStart
