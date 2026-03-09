@@ -114,8 +114,8 @@ class PinpointWrapper(
         table.put("yPosition mm", cachedYPositionMm)
         table.put("hOrientation rad", cachedHOrientationRad)
 
-        table.put("xVelocity mm per sec", cachedXVelocityMm)
-        table.put("yVelocity mm per sec", cachedYVelocityMm)
+        table.put("xVelocity meter per sec", cachedXVelocityMm / 1000.0)
+        table.put("yVelocity meter per sec", cachedYVelocityMm / 1000.0)
         table.put("hVelocity rad per sec", cachedHVelocityRad)
 
         val xMeters = cachedXPositionMm / 1000.0
@@ -147,8 +147,8 @@ class PinpointWrapper(
         cachedYPositionMm = table.get("yPosition mm", cachedYPositionMm)
         cachedHOrientationRad = table.get("hOrientation rad", cachedHOrientationRad)
 
-        cachedXVelocityMm = table.get("xVelocity mm per sec", cachedXVelocityMm)
-        cachedYVelocityMm = table.get("yVelocity mm per sec", cachedYVelocityMm)
+        cachedXVelocityMm = table.get("xVelocity meter per sec", cachedXVelocityMm) * 1000.0
+        cachedYVelocityMm = table.get("yVelocity meter per sec", cachedYVelocityMm) * 1000.0
         cachedHVelocityRad = table.get("hVelocity rad per sec", cachedHVelocityRad)
     }
 

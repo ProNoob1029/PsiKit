@@ -265,7 +265,7 @@ public class Logger {
    * operations to occur between cycles rather than interferring with the main thread.
    */
   public static void periodicAfterUser(double userCodeLength, double periodicBeforeLength) {
-    periodicAfterUser(userCodeLength, periodicBeforeLength, 0.0);
+    periodicAfterUser(userCodeLength, periodicBeforeLength, 0.0, 0.0);
   }
 
   /**
@@ -273,7 +273,7 @@ public class Logger {
    * default log values and sends data to data receivers. Running this after user code allows IO
    * operations to occur between cycles rather than interferring with the main thread.
    */
-  public static void periodicAfterUser(double userCodeLength, double periodicBeforeLength, double idleLenght) {
+  public static void periodicAfterUser(double userCodeLength, double periodicBeforeLength, double idleLength, double periodicAfterLength) {
     if (running) {
       // Update automatic outputs from user code
       double autoLogStart = getRealTimestamp();
@@ -283,13 +283,15 @@ public class Logger {
       recordOutput("Logger/AutoLogMS", (autoLogEnd - autoLogStart) * 1000.0);
       recordOutput("LoggedRobot/UserCodeMS", userCodeLength * 1000.0);
       recordOutput(
-          "LoggedRobot/LogPeriodicMS", (periodicBeforeLength) * 1000.0);
+          "LoggedRobot/LogPeriodicBeforeMS", (periodicBeforeLength) * 1000.0);
       recordOutput(
-              "LoggedRobot/LogIdleMS", idleLenght * 1000.0
+              "LoggedRobot/LogPeriodicAfterMS", (periodicAfterLength) * 1000.0);
+      recordOutput(
+              "LoggedRobot/LogIdleMS", idleLength * 1000.0
       );
       recordOutput(
           "LoggedRobot/FullCycleMS",
-          (periodicBeforeLength + userCodeLength + idleLenght) * 1000.0);
+          (periodicBeforeLength + userCodeLength + idleLength) * 1000.0);
       recordOutput("Logger/QueuedCycles", receiverQueue.size());
 
       double consoleCaptureStart = getRealTimestamp();

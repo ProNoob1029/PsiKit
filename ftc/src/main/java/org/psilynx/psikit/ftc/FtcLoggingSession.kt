@@ -251,10 +251,7 @@ class FtcLoggingSession {
         }
     }
 
-    /** Call once per loop, after [Logger.periodicBeforeUser]. */
-    fun logOnceBeforeLoop(opMode: OpMode) {
-        val loopStartNs = System.nanoTime()
-
+    fun clearAndPrefetchBulk() {
         val clearStartNs = System.nanoTime()
         clearBulkCaches()
         val clearEndNs = System.nanoTime()
@@ -270,7 +267,7 @@ class FtcLoggingSession {
             if (hubs != null) {
                 var prefetchTotalNs = 0L
                 for (hub in hubs) {
-                    if (FtcLogTuning.prefetchOnlyControlHub && LynxConstants.isEmbeddedSerialNumber(hub.serialNumber).not()) continue
+                    if (FtcLogTuning.prefetchOnlyControlHub && !hub.isParent) continue
                     val startNs = System.nanoTime()
                     try {
                         hub.bulkData
@@ -302,6 +299,11 @@ class FtcLoggingSession {
                 )
             }
         }
+    }
+
+    /** Call once per loop, after [Logger.periodicBeforeUser]. */
+    fun logOnceBeforeLoop(opMode: OpMode) {
+        val loopStartNs = System.nanoTime()
 
         val opModeControlsStartNs = System.nanoTime()
         if (!Logger.isReplay()) {
@@ -537,7 +539,7 @@ class FtcLoggingSession {
     private fun clearBulkCaches() {
         val hubs = allHubs ?: return
         for (hub in hubs) {
-            if (FtcLogTuning.prefetchOnlyControlHub && LynxConstants.isEmbeddedSerialNumber(hub.serialNumber).not()) continue
+            if (FtcLogTuning.prefetchOnlyControlHub && !hub.isParent) continue
             try {
                 hub.clearBulkCache()
             } catch (_: Throwable) {
@@ -550,7 +552,7 @@ class FtcLoggingSession {
         val hubs = allHubs ?: return
         for (hub in hubs) {
             try {
-                if (FtcLogTuning.prefetchOnlyControlHub && hub.isParent.not()) {
+                if (FtcLogTuning.prefetchOnlyControlHub && !hub.isParent) {
                     hub.bulkCachingMode = LynxModule.BulkCachingMode.AUTO
                 } else {
                     hub.bulkCachingMode = MANUAL
