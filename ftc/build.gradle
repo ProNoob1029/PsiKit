@@ -71,6 +71,7 @@ afterEvaluate {
 
 repositories {
     google()
+    maven { url = 'https://frcmaven.wpi.edu/artifactory/release/' }
     mavenCentral()
     def dairyPrivateUsername = providers.gradleProperty("dairyPrivateUsername").orNull
     def dairyPrivatePassword = providers.gradleProperty("dairyPrivatePassword").orNull

@@ -48,10 +48,27 @@ java {
 }
 repositories {
     google()
+    maven { url = 'https://frcmaven.wpi.edu/artifactory/release/' }
     mavenCentral()
 }
+
+def ntVersion = "2024.3.2"
+
 dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.7'
+
+    implementation "edu.wpi.first.ntcore:ntcore-java:$ntVersion"
+    implementation "edu.wpi.first.wpiutil:wpiutil-java:$ntVersion"
+    implementation "edu.wpi.first.wpinet:wpinet-java:$ntVersion"
+
+    runtimeOnly "edu.wpi.first.ntcore:ntcore-jni:$ntVersion:windowsx86-64"
+    runtimeOnly "edu.wpi.first.wpiutil:wpiutil-jni:$ntVersion:windowsx86-64"
+    runtimeOnly "edu.wpi.first.wpinet:wpinet-jni:$ntVersion:windowsx86-64"
+
+    runtimeOnly "edu.wpi.first.ntcore:ntcore-jni:$ntVersion:linuxarm64"
+    runtimeOnly "edu.wpi.first.wpiutil:wpiutil-jni:$ntVersion:linuxarm64"
+    runtimeOnly "edu.wpi.first.wpinet:wpinet-jni:$ntVersion:linuxarm64"
+
     testImplementation 'junit:junit:4.12'
 }
 kotlin {

@@ -2,6 +2,7 @@ package org.psilynx.psikit.ftc.test
 
 import org.junit.Test
 import org.psilynx.psikit.core.Logger
+import org.psilynx.psikit.core.NT4Publisher
 import org.psilynx.psikit.core.rlog.RLOGServer
 import org.psilynx.psikit.ftc.wrappers.GamepadWrapper
 import org.psilynx.psikit.ftc.test.fakehardware.FakeGamepad
@@ -9,6 +10,8 @@ import org.psilynx.psikit.ftc.test.fakehardware.FakeGamepad
 class GamepadTest {
     @Test fun sequentiallyPressButtons(){
         println("starting....")
+
+        val test = NT4Publisher();
 
         Logger.reset()
 

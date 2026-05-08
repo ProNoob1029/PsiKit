@@ -1,5 +1,6 @@
 package org.psilynx.psikit.ftc
 
+import android.util.Log
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
 import org.psilynx.psikit.core.LogReplaySource
 import org.psilynx.psikit.core.Logger
