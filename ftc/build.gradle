@@ -25,11 +25,18 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = '11'
+        jvmTarget = '17'
+    }
+    packaging {
+        resources.excludes.addAll(
+                "LICENSE.md",
+                "ThirdPartyNotices.txt",
+                "META-INF/MANIFEST.MF"
+        )
     }
 }
 
@@ -93,6 +100,8 @@ repositories {
     maven { url "https://repo.dairy.foundation/releases" }
 }
 
+//def ntVersion = "2024.3.2"
+
 dependencies {
 
     api "org.firstinspires.ftc:RobotCore:11.1.0"
@@ -100,6 +109,14 @@ dependencies {
     api "org.firstinspires.ftc:FtcCommon:11.1.0"
 
     implementation project(":core")
+
+//    implementation "edu.wpi.first.ntcore:ntcore-java:$ntVersion"
+//    implementation "edu.wpi.first.wpiutil:wpiutil-java:$ntVersion"
+//    implementation "edu.wpi.first.wpinet:wpinet-java:$ntVersion"
+//
+//    implementation "edu.wpi.first.ntcore:ntcore-jni:$ntVersion:linuxarm64"
+//    implementation "edu.wpi.first.wpiutil:wpiutil-jni:$ntVersion:linuxarm64"
+//    implementation "edu.wpi.first.wpinet:wpinet-jni:$ntVersion:linuxarm64"
 
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation "org.jetbrains.kotlin:kotlin-reflect:2.0.0"

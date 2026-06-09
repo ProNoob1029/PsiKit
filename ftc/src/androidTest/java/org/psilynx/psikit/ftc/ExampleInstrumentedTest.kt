@@ -2,11 +2,10 @@ package org.psilynx.psikit.ftc
 
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
-
+import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
-
-import org.junit.Assert.*
+import org.psilynx.psikit.core.NT4Publisher
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -21,5 +20,9 @@ class ExampleInstrumentedTest {
         val appContext =
             InstrumentationRegistry.getInstrumentation().targetContext
         assertEquals("org.psilynx.psikit.ftc.test", appContext.packageName)
+    }
+
+    @Test fun NT4Test(){
+        val test = NT4Publisher()
     }
 }

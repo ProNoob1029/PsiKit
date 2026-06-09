@@ -9,6 +9,7 @@ package org.psilynx.psikit.core;
 
 import edu.wpi.first.networktables.*;
 import edu.wpi.first.util.datalog.DataLog;
+import edu.wpi.first.util.datalog.DataLogBackgroundWriter;
 import edu.wpi.first.util.datalog.DataLogReader;
 
 import java.util.HashMap;
@@ -32,7 +33,7 @@ public class NT4Publisher implements LogDataReceiver {
   public void putTable(LogTable table) {
     // Send timestamp
     timestampPublisher.set((long) table.getTimestamp(), (long) table.getTimestamp());
-    DataLog log = new DataLog();
+    DataLog log = new DataLogBackgroundWriter();
     log.flush();
     log.close();
     // Get old and new data
