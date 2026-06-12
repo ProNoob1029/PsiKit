@@ -30,6 +30,9 @@ public class NT4Publisher implements LogDataReceiver {
         akitTable.getIntegerTopic(timestampKey.substring(1)).publish(PubSubOption.sendAll(true));
   }
 
+  public void test() {
+  }
+
   public void putTable(LogTable table) {
     // Send timestamp
     timestampPublisher.set((long) table.getTimestamp(), (long) table.getTimestamp());
